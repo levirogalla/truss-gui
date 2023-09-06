@@ -43,7 +43,7 @@ class TrussWidget(QWidget):
 
     def addJoint(self):
         center = self.rect().center()
-        joint = Joint(center.x(), center.y())
+        joint = Joint(center.x(), self.mapCartesian(center.y()))
         circle = JointWidget(self, joint, 50)
 
         # work around for now because pytruss doesnt allow for singular joints to be added
@@ -53,10 +53,9 @@ class TrussWidget(QWidget):
         self.truss.delete_joint(joint_temp)
         circle.updateLocation()
         circle.show()
-
         # self.ax.cla()
         # self.truss.show(ax=self.ax)
-        plt.pause(1e-10)
+        # plt.pause(1e-10)
 
     def mapCartesian(self, y):
         return self.height() - y

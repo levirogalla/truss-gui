@@ -21,12 +21,10 @@ class JointWidget(QWidget):
 
     @property
     def location(self):
+        print(self.mapToParent(self.rect().center()))
         return self.mapToParent(self.rect().center())
 
     def paintEvent(self, event):
-        self.joint.set_x(self.location.x())
-        self.joint.set_y(self.parent().mapCartesian(self.location.y()))
-
         painter = QPainter(self)
 
         # Define the circle's properties
@@ -62,17 +60,22 @@ class JointWidget(QWidget):
             self.offset = a0.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
         else:
-            if self.adding_member:
-                self.parent().highlighted_joints.remove(self.joint)
-            if not self.adding_member:
-                self.parent().highlighted_joints.add(self.joint)
-            self.adding_member = not self.adding_member
-            self.update()
+            self.selectJoint()
+
+    def selectJoint(self):
+        if self.adding_member:
+            self.parent().highlighted_joints.remove(self.joint)
+        if not self.adding_member:
+            self.parent().highlighted_joints.add(self.joint)
+        self.adding_member = not self.adding_member
+        self.update()
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         if self.dragging:
             new_pos = self.mapToParent(a0.pos() - self.offset)
             self.move(new_pos)
+            self.joint.set_x(self.location.x())
+            self.joint.set_y(self.parent().mapCartesian(self.location.y()))
             self.parent().update()
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
@@ -86,7 +89,8 @@ class JointWidget(QWidget):
     def updateLocation(self):
         self.move(
             int(self.joint.x_coordinate - self.radius/2),
-            int(self.joint.y_coordinate - self.radius/2),
+            int(self.parent().mapCartesian(
+                self.joint.y_coordinate) - self.radius/2),
         )
 
     def enterEvent(self, event: QEnterEvent | None) -> None:

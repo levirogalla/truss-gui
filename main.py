@@ -7,7 +7,7 @@ from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
 from trusseditor.trusswidget import TrussWidget
-
+from trusseditor.circle import JointWidget
 from mainwindow import Ui_MainWindow
 
 
@@ -22,29 +22,60 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionMode.MultiSelection
         )
         self.ui.build.interacted.connect(self.updateInfo)
+        self.ui.jointInfo.itemSelectionChanged.connect(self.setJointSelection)
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+
+    def setJointSelection(self):
+        print("here")
+        selectedIds = set()
+
+        self.ui.build.clearMoves()
+
+        for item in self.ui.jointInfo.selectedItems():
+            if item.column() == 0:
+                selectedIds.add(item.text())
+
+        for jointWidget in self.findChildren(JointWidget):
+            jointWidget: JointWidget
+            if str(id(jointWidget.joint)) in selectedIds:
+                # print(id(jointWidget))
+                jointWidget.selectJoint()
+
+    def updateJointLocation(self, row, col):
+        for jointWidget in self.findChildren(JointWidget):
+            if str(id(jointWidget.joint)) == self.ui.jointInfo.item(row, 0).text():
+                x = self.ui.jointInfo.item(row, 1).text()
+                y = self.ui.jointInfo.item(row, 2).text()
+                jointWidget.joint.set_cordinates([float(x), float(y)])
+                jointWidget.updateLocation()
 
     def updateInfo(self):
+        # disconnect when programaticly changing cells then reconnect at end
+        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
+        self.ui.jointInfo.itemSelectionChanged.disconnect(
+            self.setJointSelection
+        )
+
         self.ui.jointInfo.clearSelection()
         self.ui.memberInfo.clearSelection()
         self.loadJoints()
         self.loadMembers()
+
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+        self.ui.jointInfo.itemSelectionChanged.connect(self.setJointSelection)
 
     def handleMemberClick(self):
         self.ui.build.addMember()
         self.loadMembers()
 
     def handleJointClick(self):
+        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.build.addJoint()
         self.loadJoints()
-
-    def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
-        super().mouseMoveEvent(a0)
-        pos = a0.globalPosition()
-        relative_pos = self.ui.tabWidget.mapFromGlobal(pos)
-        x = relative_pos.x()
-        y = relative_pos.y()
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadJoints(self):
+
         self.ui.jointInfo.setRowCount(len(self.ui.build.truss.joints))
         for r, joint in enumerate(self.ui.build.truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))
