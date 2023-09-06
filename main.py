@@ -26,7 +26,6 @@ class MainWindow(QMainWindow):
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def setJointSelection(self):
-        print("here")
         selectedIds = set()
 
         self.ui.build.clearMoves()
@@ -38,7 +37,6 @@ class MainWindow(QMainWindow):
         for jointWidget in self.findChildren(JointWidget):
             jointWidget: JointWidget
             if str(id(jointWidget.joint)) in selectedIds:
-                # print(id(jointWidget))
                 jointWidget.selectJoint()
 
     def updateJointLocation(self, row, col):
@@ -48,6 +46,7 @@ class MainWindow(QMainWindow):
                 y = self.ui.jointInfo.item(row, 2).text()
                 jointWidget.joint.set_cordinates([float(x), float(y)])
                 jointWidget.updateLocation()
+        self.ui.build.update()
 
     def updateInfo(self):
         # disconnect when programaticly changing cells then reconnect at end
@@ -70,12 +69,11 @@ class MainWindow(QMainWindow):
 
     def handleJointClick(self):
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
-        self.ui.build.addJoint()
+        self.ui.build.previewJoint()
         self.loadJoints()
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadJoints(self):
-
         self.ui.jointInfo.setRowCount(len(self.ui.build.truss.joints))
         for r, joint in enumerate(self.ui.build.truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))

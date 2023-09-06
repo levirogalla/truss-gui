@@ -3,11 +3,12 @@ import typing
 from PyQt6 import QtGui
 from PyQt6.QtWidgets import QApplication, QWidget, QLabel, QPushButton
 from PyQt6.QtGui import QPainter, QColor, QMouseEvent, QEnterEvent
-from PyQt6.QtCore import QMimeData, QPointF, QPoint, Qt
+from PyQt6.QtCore import QMimeData, QPointF, QPoint, Qt, pyqtSignal
 from pytruss import Joint
 
 
 class JointWidget(QWidget):
+    moved = pyqtSignal()
 
     def __init__(self, parent_widget, joint: Joint, radius=50):
         self.radius = radius
@@ -17,11 +18,11 @@ class JointWidget(QWidget):
         self.dragging = False
         self.dragging_mode = False
         self.adding_member = False
-        self.offset = QPoint()
+        self.attach_to_cursor = False
+        self.offset = QPoint(int(self.radius/2), int(self.radius/2))
 
     @property
     def location(self):
-        print(self.mapToParent(self.rect().center()))
         return self.mapToParent(self.rect().center())
 
     def paintEvent(self, event):
@@ -32,6 +33,8 @@ class JointWidget(QWidget):
             circle_color = QColor(85, 120, 255)
         elif self.adding_member:
             circle_color = QColor(175, 220, 255)
+        elif self.attach_to_cursor:
+            circle_color = QColor(115, 150, 255, 100)
         else:
             circle_color = QColor(115, 150, 255)  # Blue color
 
@@ -59,6 +62,12 @@ class JointWidget(QWidget):
             self.dragging = True
             self.offset = a0.pos()
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+        elif self.attach_to_cursor:
+            self.attach_to_cursor = False
+            self.setMouseTracking(False)
+            pos = self.mapToParent(a0.pos())
+            self.parent().addJoint(pos.x(), self.parent().mapCartesian(pos.y()), self)
         else:
             self.selectJoint()
 
@@ -71,12 +80,13 @@ class JointWidget(QWidget):
         self.update()
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
-        if self.dragging:
+        if self.dragging or self.attach_to_cursor:
             new_pos = self.mapToParent(a0.pos() - self.offset)
             self.move(new_pos)
             self.joint.set_x(self.location.x())
             self.joint.set_y(self.parent().mapCartesian(self.location.y()))
             self.parent().update()
+            self.moved.emit()
 
     def mouseReleaseEvent(self, a0: QMouseEvent | None) -> None:
         if self.dragging and self.dragging_mode and a0.button() == Qt.MouseButton.LeftButton:
@@ -92,6 +102,7 @@ class JointWidget(QWidget):
             int(self.parent().mapCartesian(
                 self.joint.y_coordinate) - self.radius/2),
         )
+        self.moved.emit()
 
     def enterEvent(self, event: QEnterEvent | None) -> None:
         if self.dragging_mode:

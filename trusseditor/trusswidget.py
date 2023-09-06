@@ -5,7 +5,7 @@ from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal
 from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
 
-
+from .supports import RollerPin, FixedPin
 from .circle import JointWidget
 from pytruss import Member, Mesh, Support, Joint
 from matplotlib import pyplot as plt
@@ -17,7 +17,13 @@ class TrussWidget(QWidget):
 
     def __init__(self) -> None:
         super().__init__()
+        self.setMouseTracking(True)
+
         self.truss = Mesh()
+
+        self.adding_joint = False
+        self.temp_joint = JointWidget(self, Joint(0, 0), 50)
+        self.temp_joint.hide()
 
         self.highlighted_joints: set[JointWidget] = set()
 
@@ -41,21 +47,32 @@ class TrussWidget(QWidget):
 
         self.clearMoves()
 
-    def addJoint(self):
-        center = self.rect().center()
-        joint = Joint(center.x(), self.mapCartesian(center.y()))
-        circle = JointWidget(self, joint, 50)
+    def addSupport(self, supportType, jointWidget: JointWidget):
+        support = Support(jointWidget.joint, supportType)
+        self.truss.add_support(support)
+        if supportType == "p":
+            supWidg = FixedPin(self, 50, support, jointWidget)
+            supWidg.updateLocation()
+            supWidg.show()
+
+    def addJoint(self, x, y, temp_joint: JointWidget):
 
         # work around for now because pytruss doesnt allow for singular joints to be added
-        joint_temp = Joint(center.x()+1, center.y()+1)
+        joint = Joint(x, y)
+        joint_widget = JointWidget(self, joint, 50)
+        joint_temp = Joint(x+1, y+1)
         mem = Member(joint, joint_temp)
         self.truss.add_member(mem)
         self.truss.delete_joint(joint_temp)
-        circle.updateLocation()
-        circle.show()
-        # self.ax.cla()
-        # self.truss.show(ax=self.ax)
-        # plt.pause(1e-10)
+        joint_widget.updateLocation()
+        joint_widget.show()
+        temp_joint.hide()
+
+    def previewJoint(self):
+        self.adding_joint = True
+        self.temp_joint.show()
+        self.temp_joint.setMouseTracking(True)
+        self.temp_joint.attach_to_cursor = True
 
     def mapCartesian(self, y):
         return self.height() - y
@@ -73,6 +90,7 @@ class TrussWidget(QWidget):
                 int(mem.joint_b.x_coordinate), self.mapCartesian(
                     int(mem.joint_b.y_coordinate))
             )
+
         self.interacted.emit()
 
     def keyPressEvent(self, a0: QKeyEvent | None) -> None:
@@ -88,7 +106,19 @@ class TrussWidget(QWidget):
             joint.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None) -> None:
-        self.clearMoves()
+        if self.adding_joint:
+            self.temp_joint.joint.set_cordinates([a0.pos().x(), a0.pos().y()])
+            self.temp_joint.updateLocation()
+        else:
+            self.clearMoves()
+
+    def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
+        if self.adding_joint:
+            self.temp_joint.joint.set_cordinates(
+                [a0.pos().x(), self.mapCartesian(a0.pos().y())])
+            self.temp_joint.updateLocation()
+
+        pass
 
 
 def main():
