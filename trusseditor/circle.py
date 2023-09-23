@@ -17,7 +17,7 @@ class JointWidget(QWidget):
         self.resize(self.radius, self.radius)
         self.dragging = False
         self.dragging_mode = False
-        self.adding_member = False
+        self.selected = False
         self.attach_to_cursor = False
         self.offset = QPoint(int(self.radius/2), int(self.radius/2))
 
@@ -31,7 +31,7 @@ class JointWidget(QWidget):
         # Define the circle's properties
         if self.dragging_mode:
             circle_color = QColor(85, 120, 255)
-        elif self.adding_member:
+        elif self.selected:
             circle_color = QColor(175, 220, 255)
         elif self.attach_to_cursor:
             circle_color = QColor(115, 150, 255, 100)
@@ -54,7 +54,7 @@ class JointWidget(QWidget):
             self.offset = a0.pos()
             self.setCursor(Qt.CursorShape.OpenHandCursor)
             self.parent().highlighted_joints.clear()
-            self.adding_member = False
+            self.selected = False
             self.update()
 
     def mousePressEvent(self, a0: QMouseEvent | None) -> None:
@@ -72,11 +72,11 @@ class JointWidget(QWidget):
             self.selectJoint()
 
     def selectJoint(self):
-        if self.adding_member:
+        if self.selected:
             self.parent().highlighted_joints.remove(self.joint)
-        if not self.adding_member:
+        if not self.selected:
             self.parent().highlighted_joints.add(self.joint)
-        self.adding_member = not self.adding_member
+        self.selected = not self.selected
         self.update()
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:

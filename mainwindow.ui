@@ -275,6 +275,11 @@
           </column>
           <column>
            <property name="text">
+            <string>Joint</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
             <string>X Component</string>
            </property>
           </column>
@@ -383,7 +388,7 @@
   <customwidget>
    <class>TrussWidget</class>
    <extends>QWidget</extends>
-   <header>trusseditor/trusswidget.h</header>
+   <header>trusseditor/trusswidget2.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

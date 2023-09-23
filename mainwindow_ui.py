@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'mainwindow.ui'
+# Form implementation generated from reading ui file '/Users/levirogalla/Dev/Practice/Projects/truss-gui/mainwindow.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -257,13 +257,3 @@ class Ui_MainWindow(object):
         self.actionOpen_setting.setText(_translate("MainWindow", "Open setting"))
         self.actionView_in_MPL.setText(_translate("MainWindow", "View in MPL"))
 from trusseditor.trusswidget2 import TrussWidget
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtWidgets.QApplication(sys.argv)
-    MainWindow = QtWidgets.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec())

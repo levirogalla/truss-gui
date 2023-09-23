@@ -16,14 +16,22 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.addJointButton.clicked.connect(self.handleJointClick)
-        self.ui.addMemberButton.clicked.connect(self.handleMemberClick)
+        self.ui.addJointButton.clicked.connect(self.ui.build.previewJoint)
+        self.ui.addMemberButton.clicked.connect(self.ui.build.addMember)
+        # self.ui.addSupportButton.clicked.connect(self.ui.build.supportForm)
+        # self.ui.addForceButton.clicked.connect(self.ui.build.forceForm)
+
         self.ui.jointInfo.setSelectionMode(
             QAbstractItemView.SelectionMode.MultiSelection
         )
         self.ui.build.interacted.connect(self.updateInfo)
         self.ui.jointInfo.itemSelectionChanged.connect(self.setJointSelection)
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+
+        self.ui.build.member_added.connect(self.loadMembers)
+        self.ui.build.joint_added.connect(self.loadJoints)
+        self.ui.build.support_added.connect(self.loadSupports)
+        self.ui.build.force_added.connect(self.loadForces)
 
     def setJointSelection(self):
         selectedIds = set()
@@ -49,8 +57,6 @@ class MainWindow(QMainWindow):
         self.ui.build.update()
 
     def updateInfo(self):
-        # disconnect when programaticly changing cells then reconnect at end
-        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.jointInfo.itemSelectionChanged.disconnect(
             self.setJointSelection
         )
@@ -59,21 +65,27 @@ class MainWindow(QMainWindow):
         self.ui.memberInfo.clearSelection()
         self.loadJoints()
         self.loadMembers()
+        self.loadSupports()
+        self.loadForces()
 
-        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
-        self.ui.jointInfo.itemSelectionChanged.connect(self.setJointSelection)
+        self.ui.jointInfo.itemSelectionChanged.connect(
+            self.setJointSelection
+        )
 
-    def handleMemberClick(self):
-        self.ui.build.addMember()
-        self.loadMembers()
-
-    def handleJointClick(self):
+    def loadSupports(self):
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
-        self.ui.build.previewJoint()
-        self.loadJoints()
+        self.ui.supportInfo.setRowCount(len(self.ui.build.truss.supports))
+        for r, support in enumerate(self.ui.build.truss.supports):
+            self.ui.supportInfo.setItem(
+                r, 0, QTableWidgetItem(str(id(support))))
+            self.ui.supportInfo.setItem(
+                r, 1, QTableWidgetItem(str(support.joint)))
+            self.ui.supportInfo.setItem(
+                r, 2, QTableWidgetItem(str(support.base.base_to_code(support.base))))
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadJoints(self):
+        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.jointInfo.setRowCount(len(self.ui.build.truss.joints))
         for r, joint in enumerate(self.ui.build.truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))
@@ -87,6 +99,7 @@ class MainWindow(QMainWindow):
             if joint in self.ui.build.highlighted_joints:
                 self.ui.jointInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 0, r, 2), True)
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadMembers(self):
         self.ui.memberInfo.setRowCount(len(self.ui.build.truss.members))
@@ -106,10 +119,23 @@ class MainWindow(QMainWindow):
                 self.ui.memberInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 2, r, 2), True)
 
+    def loadForces(self):
+        self.ui.forceInfo.setRowCount(len(self.ui.build.truss.forces))
+        for r, force in enumerate(self.ui.build.truss.forces):
+            self.ui.forceInfo.setItem(r, 0, QTableWidgetItem(str(id(force))))
+            self.ui.forceInfo.setItem(r, 1, QTableWidgetItem(str(force.joint)))
+            self.ui.forceInfo.setItem(
+                r, 2, QTableWidgetItem(str(force.x_component))
+            )
+            self.ui.forceInfo.setItem(
+                r, 3, QTableWidgetItem(str(force.y_component))
+            )
+
 
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
+    window.setWindowTitle("Truss Maker")
     window.show()
     sys.exit(app.exec())
 
