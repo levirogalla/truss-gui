@@ -2,13 +2,14 @@
 
 import sys
 import typing
+import pickle
 from PyQt6 import QtGui
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
-from trusseditor.trusswidget import TrussWidget
-from trusseditor.circle import JointWidget
+from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
+from trusseditor.trusswidget2 import JointItem, TrussWidget
 from mainwindow import Ui_MainWindow
+from pytruss import Mesh
 
 
 class MainWindow(QMainWindow):
@@ -16,78 +17,217 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.ui.addJointButton.clicked.connect(self.ui.build.previewJoint)
-        self.ui.addMemberButton.clicked.connect(self.ui.build.addMember)
-        # self.ui.addSupportButton.clicked.connect(self.ui.build.supportForm)
-        # self.ui.addForceButton.clicked.connect(self.ui.build.forceForm)
 
+        self.forms = set()
+
+        # flags
         self.ui.jointInfo.setSelectionMode(
             QAbstractItemView.SelectionMode.MultiSelection
         )
-        self.ui.build.interacted.connect(self.updateInfo)
-        self.ui.jointInfo.itemSelectionChanged.connect(self.setJointSelection)
+
+        # actions
+        self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
+        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
+        self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
+        self.ui.actionSave_As.triggered.connect(self.handleSave)
+        self.ui.actionSave.triggered.connect(self.handleSave)
+
+        # info selection stuff
+        self.connectInfoSignals()
+
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
-        self.ui.build.member_added.connect(self.loadMembers)
-        self.ui.build.joint_added.connect(self.loadJoints)
-        self.ui.build.support_added.connect(self.loadSupports)
-        self.ui.build.force_added.connect(self.loadForces)
+        # tab stuff
+        self.ui.tabWidget.currentChanged.connect(self.setUpButtonSignals)
+        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+        self.setUpButtonSignals()
+        self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
 
-    def setJointSelection(self):
-        selectedIds = set()
+    def destroyForm(self, form):
+        self.forms.remove(form)
 
-        self.ui.build.clearMoves()
+    def handleSave(self):
+        current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
+
+        if current_truss.file is None:
+            saveAsDialog = QFileDialog()
+            saveAsDialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
+            saveAsDialog.setFileMode(QFileDialog.FileMode.Directory)
+            file, _ = saveAsDialog.getSaveFileName(
+                self, "Save As", None, "Truss File (.trss)")
+            current_truss.file = file
+
+        with open(current_truss.file + ("" if current_truss.file.endswith(".trss") else ".trss"), "wb") as f:
+            pickle.dump(current_truss.truss, f)
+
+    def handleOpenTruss(self):
+        # this is a callback function that opens the truss on the gui
+        openFileDialog = QFileDialog()
+        openFileDialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
+        openFileDialog.setFileMode(QFileDialog.FileMode.ExistingFile)
+        openFileDialog.setNameFilter("*.trss")
+        openFileDialog.show()
+
+        if openFileDialog.exec():
+            files = openFileDialog.selectedFiles()
+
+        for file in files:
+            self.loadTruss(file)
+
+    def loadTruss(self, file: str):
+        truss_widget = TrussWidget(file)
+        self.handleCreateNewTab(truss_widget)
+        self.ui.tabWidget.setCurrentWidget(truss_widget)
+
+    def openTrussInMPL(self):
+        self.current_tab.truss.show(show=True)
+
+    def handleCreateNewTab(self, truss: TrussWidget = None):
+
+        # weird bug where truss is passed as false?
+        if not isinstance(truss, TrussWidget):
+            self.ui.tabWidget.addTab(TrussWidget(), "Truss New")
+        else:
+            self.ui.tabWidget.addTab(truss, truss.file.split("/")[-1])
+
+    def handleTabClose(self, index):
+        truss_widget = self.ui.tabWidget.widget(index)
+        # add pop up to save truss if its not saved
+        self.ui.tabWidget.removeTab(index)
+
+    def connectInfoSignals(self):
+        self.ui.jointInfo.itemSelectionChanged.connect(
+            self.updateTrussSelections)
+        self.ui.memberInfo.itemSelectionChanged.connect(
+            self.updateTrussSelections)
+        self.ui.forceInfo.itemSelectionChanged.connect(
+            self.updateTrussSelections)
+        self.ui.supportInfo.itemSelectionChanged.connect(
+            self.updateTrussSelections)
+
+    def disconnectInfoSignals(self):
+        self.ui.jointInfo.itemSelectionChanged.disconnect(
+            self.updateTrussSelections)
+        self.ui.memberInfo.itemSelectionChanged.disconnect(
+            self.updateTrussSelections)
+        self.ui.forceInfo.itemSelectionChanged.disconnect(
+            self.updateTrussSelections)
+        self.ui.supportInfo.itemSelectionChanged.disconnect(
+            self.updateTrussSelections)
+
+    def setUpButtonSignals(self):
+        last_tab = self.current_tab
+        new_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+
+        # disconnect old signals
+        # checks to make sure signals are connected before attempting to disconnect
+        if last_tab != new_tab:
+            last_tab.interacted.disconnect(self.updateInfo)
+            last_tab.member_added.disconnect(self.loadMembers)
+            last_tab.joint_added.disconnect(self.loadJoints)
+            last_tab.support_added.disconnect(self.loadSupports)
+            last_tab.force_added.disconnect(self.loadForces)
+            self.ui.addJointButton.clicked.disconnect(last_tab.previewJoint)
+            self.ui.addMemberButton.clicked.disconnect(last_tab.addMember)
+            self.ui.addSupportButton.clicked.disconnect(last_tab.supportForm)
+            self.ui.addForceButton.clicked.disconnect(last_tab.forceForm)
+
+        # connect new signals
+        new_tab.interacted.connect(self.updateInfo)
+        new_tab.member_added.connect(self.loadMembers)
+        new_tab.joint_added.connect(self.loadJoints)
+        new_tab.support_added.connect(self.loadSupports)
+        new_tab.force_added.connect(self.loadForces)
+        self.ui.addJointButton.clicked.connect(new_tab.previewJoint)
+        self.ui.addMemberButton.clicked.connect(new_tab.addMember)
+        self.ui.addSupportButton.clicked.connect(new_tab.supportForm)
+        self.ui.addForceButton.clicked.connect(new_tab.forceForm)
+
+        self.current_tab = new_tab
+
+    def updateTrussSelections(self):
+        self.disconnectInfoSignals()
+        self.current_tab.scene().clearSelection()
 
         for item in self.ui.jointInfo.selectedItems():
             if item.column() == 0:
-                selectedIds.add(item.text())
+                truss_graphics_item = self.current_tab.connections[int(
+                    item.text())]
+                truss_graphics_item.setSelected(True)
 
-        for jointWidget in self.findChildren(JointWidget):
-            jointWidget: JointWidget
-            if str(id(jointWidget.joint)) in selectedIds:
-                jointWidget.selectJoint()
+        for item in self.ui.memberInfo.selectedItems():
+            if item.column() == 0:
+                truss_graphics_item = self.current_tab.connections[int(
+                    item.text())]
+
+                print(self.current_tab.connections, item.text())
+                truss_graphics_item.setSelected(True)
+
+        for item in self.ui.supportInfo.selectedItems():
+            if item.column() == 0:
+                truss_graphics_item = self.current_tab.connections[int(
+                    item.text())]
+                truss_graphics_item.setSelected(True)
+
+        for item in self.ui.forceInfo.selectedItems():
+            if item.column() == 0:
+                truss_graphics_item = self.current_tab.connections[int(
+                    item.text())]
+                truss_graphics_item.setSelected(True)
+
+        self.connectInfoSignals()
 
     def updateJointLocation(self, row, col):
-        for jointWidget in self.findChildren(JointWidget):
+        for jointWidget in self.findChildren(JointItem):
+            jointWidget: JointItem
             if str(id(jointWidget.joint)) == self.ui.jointInfo.item(row, 0).text():
                 x = self.ui.jointInfo.item(row, 1).text()
                 y = self.ui.jointInfo.item(row, 2).text()
                 jointWidget.joint.set_cordinates([float(x), float(y)])
-                jointWidget.updateLocation()
-        self.ui.build.update()
+                jointWidget.updateSceneLocation()
+        self.ui.tabWidget.currentWidget().update()
 
     def updateInfo(self):
-        self.ui.jointInfo.itemSelectionChanged.disconnect(
-            self.setJointSelection
-        )
+        self.disconnectInfoSignals()
 
         self.ui.jointInfo.clearSelection()
         self.ui.memberInfo.clearSelection()
+        self.ui.forceInfo.clearSelection()
+        self.ui.supportInfo.clearSelection()
         self.loadJoints()
         self.loadMembers()
         self.loadSupports()
         self.loadForces()
 
-        self.ui.jointInfo.itemSelectionChanged.connect(
-            self.setJointSelection
-        )
+        self.connectInfoSignals()
 
     def loadSupports(self):
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
-        self.ui.supportInfo.setRowCount(len(self.ui.build.truss.supports))
-        for r, support in enumerate(self.ui.build.truss.supports):
+        self.ui.supportInfo.setRowCount(
+            len(self.ui.tabWidget.currentWidget().truss.supports))
+        for r, support in enumerate(self.ui.tabWidget.currentWidget().truss.supports):
             self.ui.supportInfo.setItem(
                 r, 0, QTableWidgetItem(str(id(support))))
             self.ui.supportInfo.setItem(
                 r, 1, QTableWidgetItem(str(support.joint)))
             self.ui.supportInfo.setItem(
                 r, 2, QTableWidgetItem(str(support.base.base_to_code(support.base))))
+
+            if self.itemIsSelected(support):
+                self.ui.supportInfo.setRangeSelected(
+                    QTableWidgetSelectionRange(r, 0, r, 2), True)
+
+            if self.itemIsSelected(support.joint):
+                self.ui.memberInfo.setRangeSelected(
+                    QTableWidgetSelectionRange(r, 1, r, 1), True)
+
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadJoints(self):
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
-        self.ui.jointInfo.setRowCount(len(self.ui.build.truss.joints))
-        for r, joint in enumerate(self.ui.build.truss.joints):
+        self.ui.jointInfo.setRowCount(
+            len(self.ui.tabWidget.currentWidget().truss.joints))
+        for r, joint in enumerate(self.ui.tabWidget.currentWidget().truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))
             self.ui.jointInfo.setItem(
                 r, 1, QTableWidgetItem(str(joint.x_coordinate.item()))
@@ -95,15 +235,20 @@ class MainWindow(QMainWindow):
             self.ui.jointInfo.setItem(
                 r, 2, QTableWidgetItem(str(joint.y_coordinate.item()))
             )
+            self.ui.jointInfo.setItem(
+                r, 3, QTableWidgetItem(str(joint.track_grad))
+            )
 
-            if joint in self.ui.build.highlighted_joints:
+            if self.itemIsSelected(joint):
                 self.ui.jointInfo.setRangeSelected(
-                    QTableWidgetSelectionRange(r, 0, r, 2), True)
+                    QTableWidgetSelectionRange(r, 0, r, 3), True)
+
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadMembers(self):
-        self.ui.memberInfo.setRowCount(len(self.ui.build.truss.members))
-        for r, member in enumerate(self.ui.build.truss.members):
+        self.ui.memberInfo.setRowCount(
+            len(self.ui.tabWidget.currentWidget().truss.members))
+        for r, member in enumerate(self.ui.tabWidget.currentWidget().truss.members):
             self.ui.memberInfo.setItem(r, 0, QTableWidgetItem(str(id(member))))
             self.ui.memberInfo.setItem(
                 r, 1, QTableWidgetItem(str(member.joint_a))
@@ -112,16 +257,22 @@ class MainWindow(QMainWindow):
                 r, 2, QTableWidgetItem(str(member.joint_b))
             )
 
-            if member.joint_a in self.ui.build.highlighted_joints:
+            if self.itemIsSelected(member):
+                self.ui.memberInfo.setRangeSelected(
+                    QTableWidgetSelectionRange(r, 0, r, 2), True)
+
+            if self.itemIsSelected(member.joint_a):
                 self.ui.memberInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 1, r, 1), True)
-            if member.joint_b in self.ui.build.highlighted_joints:
+
+            if self.itemIsSelected(member.joint_b):
                 self.ui.memberInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 2, r, 2), True)
 
     def loadForces(self):
-        self.ui.forceInfo.setRowCount(len(self.ui.build.truss.forces))
-        for r, force in enumerate(self.ui.build.truss.forces):
+        self.ui.forceInfo.setRowCount(
+            len(self.ui.tabWidget.currentWidget().truss.forces))
+        for r, force in enumerate(self.ui.tabWidget.currentWidget().truss.forces):
             self.ui.forceInfo.setItem(r, 0, QTableWidgetItem(str(id(force))))
             self.ui.forceInfo.setItem(r, 1, QTableWidgetItem(str(force.joint)))
             self.ui.forceInfo.setItem(
@@ -130,6 +281,23 @@ class MainWindow(QMainWindow):
             self.ui.forceInfo.setItem(
                 r, 3, QTableWidgetItem(str(force.y_component))
             )
+
+            if self.itemIsSelected(force):
+                self.ui.forceInfo.setRangeSelected(
+                    QTableWidgetSelectionRange(r, 0, r, 3), True)
+
+            if self.itemIsSelected(force.joint):
+                self.ui.forceInfo.setRangeSelected(
+                    QTableWidgetSelectionRange(r, 1, r, 1), True)
+
+    def itemIsSelected(self, truss_item):
+        if self.ui.tabWidget.currentWidget().connections[id(truss_item)] is not None:
+            return self.ui.tabWidget.currentWidget().connections[id(truss_item)].isSelected()
+        return False
+
+    def mousePressEvent(self, a0: QMouseEvent | None) -> None:
+        print(self.ui.tabWidget.currentWidget())
+        return super().mousePressEvent(a0)
 
 
 def main():
