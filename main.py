@@ -25,13 +25,19 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionMode.MultiSelection
         )
 
-        # actions
+        # file actions
         self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
-        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
         self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.connect(self.handleSave)
         self.ui.actionSave.triggered.connect(self.handleSave)
 
+        # solve actions
+        self.ui.actionSolve_Members.triggered.connect(
+            self.handleSolveMembers)
+        self.ui.actionSolve_Reactions.triggered.connect(
+            self.handleSolveReactions)
+
+        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
         # info selection stuff
         self.connectInfoSignals()
 
@@ -45,6 +51,19 @@ class MainWindow(QMainWindow):
 
     def destroyForm(self, form):
         self.forms.remove(form)
+
+    def handleSolveReactions(self):
+        truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
+        truss_widget.truss.solve_supports()
+        truss_widget.loadTrussWidgetFromMesh(False)
+        self.updateInfo()
+
+    def handleSolveMembers(self):
+        print("here")
+        truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
+        truss_widget.truss.solve_members()
+        truss_widget.loadTrussWidgetFromMesh(False)
+        self.updateInfo()
 
     def handleSave(self):
         current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
@@ -212,6 +231,15 @@ class MainWindow(QMainWindow):
                 r, 1, QTableWidgetItem(str(support.joint)))
             self.ui.supportInfo.setItem(
                 r, 2, QTableWidgetItem(str(support.base.base_to_code(support.base))))
+            self.ui.supportInfo.setItem(
+                r, 3, QTableWidgetItem(str(float(support.x_reaction)))
+            )
+            self.ui.supportInfo.setItem(
+                r, 4, QTableWidgetItem(str(float(support.y_reaction)))
+            )
+            self.ui.supportInfo.setItem(
+                r, 5, QTableWidgetItem(str(float(support.moment_reaction)))
+            )
 
             if self.itemIsSelected(support):
                 self.ui.supportInfo.setRangeSelected(
@@ -256,6 +284,12 @@ class MainWindow(QMainWindow):
             self.ui.memberInfo.setItem(
                 r, 2, QTableWidgetItem(str(member.joint_b))
             )
+            self.ui.memberInfo.setItem(
+                r, 3, QTableWidgetItem(str(member.force.item()))
+            )
+            self.ui.memberInfo.setItem(
+                r, 4, QTableWidgetItem(str(member.force_type))
+            )
 
             if self.itemIsSelected(member):
                 self.ui.memberInfo.setRangeSelected(
@@ -276,10 +310,13 @@ class MainWindow(QMainWindow):
             self.ui.forceInfo.setItem(r, 0, QTableWidgetItem(str(id(force))))
             self.ui.forceInfo.setItem(r, 1, QTableWidgetItem(str(force.joint)))
             self.ui.forceInfo.setItem(
-                r, 2, QTableWidgetItem(str(force.x_component))
+                r, 2, QTableWidgetItem(str(float(force.x_component)))
             )
             self.ui.forceInfo.setItem(
-                r, 3, QTableWidgetItem(str(force.y_component))
+                r, 3, QTableWidgetItem(str(float(force.y_component)))
+            )
+            self.ui.forceInfo.setItem(
+                r, 4, QTableWidgetItem(str(force.type))
             )
 
             if self.itemIsSelected(force):

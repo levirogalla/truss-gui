@@ -21,7 +21,7 @@ FORCE_SCALE = 10
 JOINT_SIZE = 20
 SUPPORT_SIZE = JOINT_SIZE*2
 FORCE_SIZE = 2
-MEMBER_SIZE = 1
+MEMBER_SIZE = 10
 FORCE_HEAD_LENGTH = 20
 FORCE_HEAD_WIDTH = 10
 
@@ -509,37 +509,41 @@ class TrussWidget(QGraphicsView):
 
         self.loadTrussWidgetFromMesh()
 
-    def loadTrussWidgetFromMesh(self):
-        if self.file is not None:
-            print(self.file)
-            with open(self.file, "rb") as f:
-                mesh: Mesh = pickle.load(f)
+    def loadTrussWidgetFromMesh(self, load_from_file=True):
+        # delete all existing items on scene
+        self.scene().clear()
+        self.connections.clear()
 
-            self.truss = mesh
-            # maybe make function to add widget to scene since its used a lot
-            for joint in mesh.joints:
-                joint_widget = JointItem(joint, JOINT_SIZE)
-                self.connections[id(joint)] = joint_widget
-                self.scene().addItem(joint_widget)
-                self.joint_added.emit()
+        if load_from_file:
+            if self.file is not None:
+                with open(self.file, "rb") as f:
+                    mesh: Mesh = pickle.load(f)
 
-            for member in mesh.members:
-                member_widget = MemberItem(MEMBER_SIZE, member)
-                self.connections[id(member)] = member_widget
-                self.scene().addItem(member_widget)
+                self.truss = mesh
 
-            for support in mesh.supports:
-                support_widget = SupportItem(SUPPORT_SIZE, support)
-                self.connections[id(support)] = support_widget
-                self.scene().addItem(support_widget)
+        # maybe make function to add widget to scene since its used a lot
+        for joint in self.truss.joints:
+            joint_widget = JointItem(joint, JOINT_SIZE)
+            self.connections[id(joint)] = joint_widget
+            self.scene().addItem(self.connections[id(joint)])
 
-            for force in mesh.forces:
-                force_widget = ForceItem(
-                    force, FORCE_SIZE, FORCE_SCALE, FORCE_HEAD_WIDTH, FORCE_HEAD_LENGTH)
-                self.connections[id(force)] = force_widget
-                self.scene().addItem(force_widget)
+        for member in self.truss.members:
+            member_widget = MemberItem(MEMBER_SIZE, member)
+            self.connections[id(member)] = member_widget
+            self.scene().addItem(self.connections[id(member)])
 
-            self.scene().update()
+        for support in self.truss.supports:
+            support_widget = SupportItem(SUPPORT_SIZE, support)
+            self.connections[id(support)] = support_widget
+            self.scene().addItem(self.connections[id(support)])
+
+        for force in self.truss.forces:
+            force_widget = ForceItem(
+                force, FORCE_SIZE, FORCE_SCALE, FORCE_HEAD_WIDTH, FORCE_HEAD_LENGTH)
+            self.connections[id(force)] = force_widget
+            self.scene().addItem(self.connections[id(force)])
+
+        self.scene().update()
 
     def event(self, event: QEvent | None) -> bool:
         if event.type() == QEvent.Type.Gesture:
@@ -597,7 +601,7 @@ class TrussWidget(QGraphicsView):
                     if j1.joint != j2.joint and j2.joint not in visted:
                         member = Member(j1.joint, j2.joint)
                         self.truss.add_member(member)
-                        item = MemberItem(10, member)
+                        item = MemberItem(MEMBER_SIZE, member)
                         self.connections[id(member)] = item
                         self.scene().addItem(item)
             visted.add(j1.joint)

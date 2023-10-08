@@ -277,6 +277,16 @@
             <string>Joint B</string>
            </property>
           </column>
+          <column>
+           <property name="text">
+            <string>Internal Force</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Force Type</string>
+           </property>
+          </column>
          </widget>
         </item>
         <item>
@@ -301,6 +311,11 @@
             <string>Y Component</string>
            </property>
           </column>
+          <column>
+           <property name="text">
+            <string>Type</string>
+           </property>
+          </column>
          </widget>
         </item>
         <item>
@@ -318,6 +333,21 @@
           <column>
            <property name="text">
             <string>Base</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>X Reaction</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Y  Reaction</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Moment Reaction</string>
            </property>
           </column>
          </widget>
@@ -357,6 +387,9 @@
     <property name="title">
      <string>Solve</string>
     </property>
+    <addaction name="actionSolve_Reactions"/>
+    <addaction name="actionSolve_Members"/>
+    <addaction name="separator"/>
     <addaction name="actionOpen_setting"/>
    </widget>
    <widget class="QMenu" name="menuOptimize">
@@ -425,6 +458,16 @@
    </property>
    <property name="shortcut">
     <string>Ctrl+Shift+S</string>
+   </property>
+  </action>
+  <action name="actionSolve_Reactions">
+   <property name="text">
+    <string>Solve Reactions</string>
+   </property>
+  </action>
+  <action name="actionSolve_Members">
+   <property name="text">
+    <string>Solve Members</string>
    </property>
   </action>
  </widget>
