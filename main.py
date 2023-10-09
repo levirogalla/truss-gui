@@ -10,6 +10,7 @@ from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidget
 from trusseditor.trusswidget2 import JointItem, TrussWidget
 from mainwindow import Ui_MainWindow
 from pytruss import Mesh
+from trusseditor.forms.checksave.checksave import CheckSaveForm
 
 
 class MainWindow(QMainWindow):
@@ -59,25 +60,29 @@ class MainWindow(QMainWindow):
         self.updateInfo()
 
     def handleSolveMembers(self):
-        print("here")
         truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
         truss_widget.truss.solve_members()
         truss_widget.loadTrussWidgetFromMesh(False)
         self.updateInfo()
 
     def handleSave(self):
+        print("here")
         current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
 
         if current_truss.file is None:
-            saveAsDialog = QFileDialog()
+            saveAsDialog = QFileDialog(self)
             saveAsDialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
             saveAsDialog.setFileMode(QFileDialog.FileMode.Directory)
             file, _ = saveAsDialog.getSaveFileName(
                 self, "Save As", None, "Truss File (.trss)")
+            if file == "":
+                return
             current_truss.file = file
 
         with open(current_truss.file + ("" if current_truss.file.endswith(".trss") else ".trss"), "wb") as f:
             pickle.dump(current_truss.truss, f)
+
+        current_truss.edits.clear()
 
     def handleOpenTruss(self):
         # this is a callback function that opens the truss on the gui
@@ -91,12 +96,9 @@ class MainWindow(QMainWindow):
             files = openFileDialog.selectedFiles()
 
         for file in files:
-            self.loadTruss(file)
-
-    def loadTruss(self, file: str):
-        truss_widget = TrussWidget(file)
-        self.handleCreateNewTab(truss_widget)
-        self.ui.tabWidget.setCurrentWidget(truss_widget)
+            truss_widget = TrussWidget(file)
+            self.handleCreateNewTab(truss_widget)
+            self.ui.tabWidget.setCurrentWidget(truss_widget)
 
     def openTrussInMPL(self):
         self.current_tab.truss.show(show=True)
@@ -110,9 +112,13 @@ class MainWindow(QMainWindow):
             self.ui.tabWidget.addTab(truss, truss.file.split("/")[-1])
 
     def handleTabClose(self, index):
-        truss_widget = self.ui.tabWidget.widget(index)
         # add pop up to save truss if its not saved
-        self.ui.tabWidget.removeTab(index)
+        truss_widget: TrussWidget = self.ui.tabWidget.widget(index)
+
+        if len(truss_widget.edits) != 0:
+            form = CheckSaveForm(
+                self, self.handleSave, lambda: self.ui.tabWidget.removeTab(index), lambda: None)
+            form.exec()
 
     def connectInfoSignals(self):
         self.ui.jointInfo.itemSelectionChanged.connect(
@@ -243,7 +249,7 @@ class MainWindow(QMainWindow):
 
             if self.itemIsSelected(support):
                 self.ui.supportInfo.setRangeSelected(
-                    QTableWidgetSelectionRange(r, 0, r, 2), True)
+                    QTableWidgetSelectionRange(r, 0, r, 5), True)
 
             if self.itemIsSelected(support.joint):
                 self.ui.memberInfo.setRangeSelected(
@@ -293,7 +299,7 @@ class MainWindow(QMainWindow):
 
             if self.itemIsSelected(member):
                 self.ui.memberInfo.setRangeSelected(
-                    QTableWidgetSelectionRange(r, 0, r, 2), True)
+                    QTableWidgetSelectionRange(r, 0, r, 4), True)
 
             if self.itemIsSelected(member.joint_a):
                 self.ui.memberInfo.setRangeSelected(
@@ -321,7 +327,7 @@ class MainWindow(QMainWindow):
 
             if self.itemIsSelected(force):
                 self.ui.forceInfo.setRangeSelected(
-                    QTableWidgetSelectionRange(r, 0, r, 3), True)
+                    QTableWidgetSelectionRange(r, 0, r, 4), True)
 
             if self.itemIsSelected(force.joint):
                 self.ui.forceInfo.setRangeSelected(

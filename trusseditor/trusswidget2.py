@@ -10,8 +10,8 @@ from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF
 from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent, QColor, QPainterPath
 from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
-from .supports.supports import SupportForm
-from .forces.forces import ForceForm
+from .forms.supports.supports import SupportForm
+from .forms.forces.forces import ForceForm
 
 from pytruss import Member, Mesh, Support, Joint, Force
 from matplotlib import pyplot as plt
@@ -42,6 +42,9 @@ class TrussItem(QGraphicsItem):
             return item
         except KeyError as error:
             print(f"{truss_item_id} not found")
+
+    def logChange(self, event):
+        self.scene().views()[0].edits.append(event)
 
 
 class JointItem(TrussItem):
@@ -154,6 +157,8 @@ class JointItem(TrussItem):
         if self.__dragging:
             self.clearModes()
             self.setCursor(Qt.CursorShape.ArrowCursor)
+            self.logChange(f"Item moved too {self.joint}")
+
         self.update()
         self.scene().update()
 
@@ -507,19 +512,27 @@ class TrussWidget(QGraphicsView):
         self.preview_joint.hide()
         self.forms: set[QWidget] = set()
 
+        # track changes made
+        self.edits = []
+
         self.loadTrussWidgetFromMesh()
+
+    def resetScene(self):
+        self.scene().clear()
+        self.connections.clear()
+        self.preview_joint = PreviewJointItem(JOINT_SIZE)
+        self.scene().addItem(self.preview_joint)
+        self.preview_joint.hide()
 
     def loadTrussWidgetFromMesh(self, load_from_file=True):
         # delete all existing items on scene
-        self.scene().clear()
-        self.connections.clear()
+        self.resetScene()
 
-        if load_from_file:
-            if self.file is not None:
-                with open(self.file, "rb") as f:
-                    mesh: Mesh = pickle.load(f)
+        if load_from_file and self.file is not None:
+            with open(self.file, "rb") as f:
+                mesh: Mesh = pickle.load(f)
 
-                self.truss = mesh
+            self.truss = mesh
 
         # maybe make function to add widget to scene since its used a lot
         for joint in self.truss.joints:
@@ -591,6 +604,7 @@ class TrussWidget(QGraphicsView):
         self.connections[id(new_joint)] = item
         self.scene().addItem(item)
         self.joint_added.emit()
+        self.edits.append("Joint added")
 
     def addMember(self):
         visted: set[Joint] = set()
@@ -607,6 +621,7 @@ class TrussWidget(QGraphicsView):
             visted.add(j1.joint)
         self.scene().clearSelection()
         self.member_added.emit()
+        self.edits.append("Member added")
 
     def destroyForm(self, form: QWidget):
         self.forms.remove(form)
@@ -616,21 +631,21 @@ class TrussWidget(QGraphicsView):
 
     def supportForm(self):
         def addSupport(joint, support_type):
-            if support_type == "Fixed Pin":
-                support = Support(joint, "p")
+            def addSupportDetails(support):
                 self.truss.add_support(support)
                 supWidg = SupportItem(SUPPORT_SIZE, support)
                 self.connections[id(support)] = supWidg
                 self.scene().addItem(supWidg)
                 self.support_added.emit()
+                self.edits.append(f"{support} added")
+
+            if support_type == "Fixed Pin":
+                support = Support(joint, "p")
+                addSupportDetails(support)
 
             elif support_type == "Roller Pin":
                 support = Support(joint, "rp")
-                self.truss.add_support(support)
-                supWidg = SupportItem(SUPPORT_SIZE, support)
-                self.connections[id(support)] = supWidg
-                self.scene().addItem(supWidg)
-                self.support_added.emit()
+                addSupportDetails(support)
 
             else:
                 print(ValueError(
@@ -660,6 +675,7 @@ class TrussWidget(QGraphicsView):
             self.connections[id(force)] = force_item
             self.scene().addItem(force_item)
             self.force_added.emit()
+            self.edits.append(f"{force} added")
 
         no_selected_joints = True
         for selected_joint in self.scene().selectedItems():
