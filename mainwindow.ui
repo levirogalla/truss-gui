@@ -173,7 +173,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>0</number>
+        <number>1</number>
        </property>
        <property name="elideMode">
         <enum>Qt::ElideLeft</enum>
@@ -390,7 +390,7 @@
     <addaction name="actionSolve_Reactions"/>
     <addaction name="actionSolve_Members"/>
     <addaction name="separator"/>
-    <addaction name="actionOpen_setting"/>
+    <addaction name="actionOpen_Optimizer"/>
    </widget>
    <widget class="QMenu" name="menuOptimize">
     <property name="title">
@@ -429,9 +429,9 @@
     <string>edit</string>
    </property>
   </action>
-  <action name="actionOpen_setting">
+  <action name="actionOpen_Optimizer">
    <property name="text">
-    <string>Open setting</string>
+    <string>Open Optimizer...</string>
    </property>
   </action>
   <action name="actionView_in_MPL">
@@ -468,6 +468,11 @@
   <action name="actionSolve_Members">
    <property name="text">
     <string>Solve Members</string>
+   </property>
+  </action>
+  <action name="actionOptimize">
+   <property name="text">
+    <string>Optimize</string>
    </property>
   </action>
  </widget>

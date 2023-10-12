@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_Changes(object):
     def setupUi(self, Changes):
         Changes.setObjectName("Changes")
-        Changes.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
+        Changes.setWindowModality(QtCore.Qt.WindowModality.WindowModal)
         Changes.resize(300, 403)
         sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Policy.Preferred, QtWidgets.QSizePolicy.Policy.Preferred)
         sizePolicy.setHorizontalStretch(21)
@@ -73,7 +73,7 @@ class Ui_Changes(object):
 
     def retranslateUi(self, Changes):
         _translate = QtCore.QCoreApplication.translate
-        Changes.setWindowTitle(_translate("Changes", "Form"))
+        Changes.setWindowTitle(_translate("Changes", "Save Changes"))
         self.textBrowser.setHtml(_translate("Changes", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><meta charset=\"utf-8\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"

@@ -209,8 +209,8 @@ class Ui_MainWindow(object):
         self.actionSave.setObjectName("actionSave")
         self.actionedit = QtGui.QAction(parent=MainWindow)
         self.actionedit.setObjectName("actionedit")
-        self.actionOpen_setting = QtGui.QAction(parent=MainWindow)
-        self.actionOpen_setting.setObjectName("actionOpen_setting")
+        self.actionOpen_Optimizer = QtGui.QAction(parent=MainWindow)
+        self.actionOpen_Optimizer.setObjectName("actionOpen_Optimizer")
         self.actionView_in_MPL = QtGui.QAction(parent=MainWindow)
         self.actionView_in_MPL.setObjectName("actionView_in_MPL")
         self.actionNew = QtGui.QAction(parent=MainWindow)
@@ -223,6 +223,8 @@ class Ui_MainWindow(object):
         self.actionSolve_Reactions.setObjectName("actionSolve_Reactions")
         self.actionSolve_Members = QtGui.QAction(parent=MainWindow)
         self.actionSolve_Members.setObjectName("actionSolve_Members")
+        self.actionOptimize = QtGui.QAction(parent=MainWindow)
+        self.actionOptimize.setObjectName("actionOptimize")
         self.menuFile.addAction(self.actionNew)
         self.menuFile.addAction(self.actionOpen)
         self.menuFile.addSeparator()
@@ -232,7 +234,7 @@ class Ui_MainWindow(object):
         self.menuSolve.addAction(self.actionSolve_Reactions)
         self.menuSolve.addAction(self.actionSolve_Members)
         self.menuSolve.addSeparator()
-        self.menuSolve.addAction(self.actionOpen_setting)
+        self.menuSolve.addAction(self.actionOpen_Optimizer)
         self.menuView.addAction(self.actionView_in_MPL)
         self.menubar.addAction(self.menuFile.menuAction())
         self.menubar.addAction(self.menuEdit.menuAction())
@@ -241,7 +243,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuView.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
     def retranslateUi(self, MainWindow):
@@ -302,7 +304,7 @@ class Ui_MainWindow(object):
         self.actionSave.setText(_translate("MainWindow", "Save"))
         self.actionSave.setShortcut(_translate("MainWindow", "Ctrl+S"))
         self.actionedit.setText(_translate("MainWindow", "edit"))
-        self.actionOpen_setting.setText(_translate("MainWindow", "Open setting"))
+        self.actionOpen_Optimizer.setText(_translate("MainWindow", "Open Optimizer..."))
         self.actionView_in_MPL.setText(_translate("MainWindow", "View in MPL"))
         self.actionNew.setText(_translate("MainWindow", "New Truss"))
         self.actionOpen.setText(_translate("MainWindow", "Open..."))
@@ -311,4 +313,5 @@ class Ui_MainWindow(object):
         self.actionSave_As.setShortcut(_translate("MainWindow", "Ctrl+Shift+S"))
         self.actionSolve_Reactions.setText(_translate("MainWindow", "Solve Reactions"))
         self.actionSolve_Members.setText(_translate("MainWindow", "Solve Members"))
+        self.actionOptimize.setText(_translate("MainWindow", "Optimize"))
 from trusseditor.trusswidget2 import TrussWidget

@@ -515,6 +515,24 @@ class TrussWidget(QGraphicsView):
         # track changes made
         self.edits = []
 
+        self.truss_optimization_settings = {
+            "member_cost": 10,
+            "joint_cost": 10,
+            "lr": 0.01,
+            "epochs": 10,
+            "optimizer": None,
+            "min_member_length": None,
+            "max_member_length": None,
+            "max_tensile_force": None,
+            "max_compresive_force": None,
+            "constriant_agression": None,
+            "progress_bar": True,
+            "show_metrics": True,
+            "update_metrics_interval": 100,
+            "save_frequency": 1000,
+            "save_path": None
+        }
+
         self.loadTrussWidgetFromMesh()
 
     def resetScene(self):

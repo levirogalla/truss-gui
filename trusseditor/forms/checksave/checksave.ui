@@ -3,7 +3,7 @@
  <class>Changes</class>
  <widget class="QWidget" name="Changes">
   <property name="windowModality">
-   <enum>Qt::ApplicationModal</enum>
+   <enum>Qt::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -20,7 +20,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Form</string>
+   <string>Save Changes</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>

@@ -8,9 +8,10 @@ from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
 from trusseditor.trusswidget2 import JointItem, TrussWidget
-from mainwindow import Ui_MainWindow
+from mainwindow_ui import Ui_MainWindow
 from pytruss import Mesh
 from trusseditor.forms.checksave.checksave import CheckSaveForm
+from trusseditor.forms.optimizer.optimize import OptimizeForm
 
 
 class MainWindow(QMainWindow):
@@ -37,6 +38,9 @@ class MainWindow(QMainWindow):
             self.handleSolveMembers)
         self.ui.actionSolve_Reactions.triggered.connect(
             self.handleSolveReactions)
+        self.ui.actionOpen_Optimizer.triggered.connect(
+            self.handleOptimize
+        )
 
         self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
         # info selection stuff
@@ -52,6 +56,12 @@ class MainWindow(QMainWindow):
 
     def destroyForm(self, form):
         self.forms.remove(form)
+
+    def handleOptimize(self):
+        # block current truss widget when this form is opened
+        print("here")
+        form = OptimizeForm(self.ui.tabWidget.currentWidget())
+        form.exec()
 
     def handleSolveReactions(self):
         truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
