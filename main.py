@@ -11,7 +11,7 @@ from trusseditor.trusswidget2 import JointItem, TrussWidget
 from mainwindow_ui import Ui_MainWindow
 from pytruss import Mesh
 from trusseditor.forms.checksave.checksave import CheckSaveForm
-from trusseditor.forms.optimizer.optimize import OptimizeForm
+from trusseditor.forms.optimizer.optimize import OptimizeDialog
 
 
 class MainWindow(QMainWindow):
@@ -59,8 +59,7 @@ class MainWindow(QMainWindow):
 
     def handleOptimize(self):
         # block current truss widget when this form is opened
-        print("here")
-        form = OptimizeForm(self.ui.tabWidget.currentWidget())
+        form = OptimizeDialog(self.ui.tabWidget.currentWidget())
         form.exec()
 
     def handleSolveReactions(self):
@@ -129,6 +128,8 @@ class MainWindow(QMainWindow):
             form = CheckSaveForm(
                 self, self.handleSave, lambda: self.ui.tabWidget.removeTab(index), lambda: None)
             form.exec()
+        else:
+            self.ui.tabWidget.removeTab(index)
 
     def connectInfoSignals(self):
         self.ui.jointInfo.itemSelectionChanged.connect(
