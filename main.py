@@ -7,11 +7,12 @@ from PyQt6 import QtGui
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
-from trusseditor.trusswidget2 import JointItem, TrussWidget
+from trusseditor.trusswidget2 import JointItem, TrussWidget, SavedTruss
 from mainwindow_ui import Ui_MainWindow
 from pytruss import Mesh
 from trusseditor.forms.checksave.checksave import CheckSaveForm
 from trusseditor.forms.optimizer.optimize import OptimizeDialog
+from trusseditor.forms.trusspreferences.trussprefences import TrussPreferences
 
 
 class MainWindow(QMainWindow):
@@ -42,7 +43,11 @@ class MainWindow(QMainWindow):
             self.handleOptimize
         )
 
+        # view actions
         self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
+        self.ui.actionTruss_Preferences.triggered.connect(
+            self.openTrussPreferences)
+
         # info selection stuff
         self.connectInfoSignals()
 
@@ -53,6 +58,10 @@ class MainWindow(QMainWindow):
         self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
         self.setUpButtonSignals()
         self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
+
+    def openTrussPreferences(self):
+        dialog = TrussPreferences(self.current_tab)
+        dialog.exec()
 
     def destroyForm(self, form):
         self.forms.remove(form)
@@ -74,7 +83,7 @@ class MainWindow(QMainWindow):
         truss_widget.loadTrussWidgetFromMesh(False)
         self.updateInfo()
 
-    def handleSave(self):
+    def handleSave(self, optional_suffix=""):
         print("here")
         current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
 
@@ -88,17 +97,14 @@ class MainWindow(QMainWindow):
                 return
             current_truss.file = file
 
-        with open(current_truss.file + ("" if current_truss.file.endswith(".trss") else ".trss"), "wb") as f:
-            pickle.dump(current_truss.truss, f)
-
-        current_truss.edits.clear()
+        current_truss.saveTruss()
 
     def handleOpenTruss(self):
         # this is a callback function that opens the truss on the gui
         openFileDialog = QFileDialog()
         openFileDialog.setAcceptMode(QFileDialog.AcceptMode.AcceptOpen)
         openFileDialog.setFileMode(QFileDialog.FileMode.ExistingFile)
-        openFileDialog.setNameFilter("*.trss")
+        openFileDialog.setNameFilter("Truss Files (*.trss);; All Files (*)")
         openFileDialog.show()
 
         if openFileDialog.exec():

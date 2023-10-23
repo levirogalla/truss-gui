@@ -173,7 +173,7 @@
         <enum>QTabWidget::Rounded</enum>
        </property>
        <property name="currentIndex">
-        <number>1</number>
+        <number>0</number>
        </property>
        <property name="elideMode">
         <enum>Qt::ElideLeft</enum>
@@ -201,10 +201,10 @@
          </sizepolicy>
         </property>
         <attribute name="title">
-         <string>Truss 1</string>
+         <string>Start</string>
         </attribute>
        </widget>
-       <widget class="TrussWidget" name="truss2">
+       <widget class="TrussWidget" name="truss">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -212,7 +212,7 @@
          </sizepolicy>
         </property>
         <attribute name="title">
-         <string>Truss 2</string>
+         <string>New Truss</string>
         </attribute>
        </widget>
       </widget>
@@ -382,6 +382,8 @@
      <string>Edit</string>
     </property>
     <addaction name="actionedit"/>
+    <addaction name="actionRedo"/>
+    <addaction name="separator"/>
    </widget>
    <widget class="QMenu" name="menuSolve">
     <property name="title">
@@ -392,21 +394,17 @@
     <addaction name="separator"/>
     <addaction name="actionOpen_Optimizer"/>
    </widget>
-   <widget class="QMenu" name="menuOptimize">
-    <property name="title">
-     <string>Optimize</string>
-    </property>
-   </widget>
    <widget class="QMenu" name="menuView">
     <property name="title">
      <string>View</string>
     </property>
     <addaction name="actionView_in_MPL"/>
+    <addaction name="separator"/>
+    <addaction name="actionTruss_Preferences"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
    <addaction name="menuSolve"/>
-   <addaction name="menuOptimize"/>
    <addaction name="menuView"/>
   </widget>
   <widget class="QStatusBar" name="statusbar"/>
@@ -426,7 +424,7 @@
   </action>
   <action name="actionedit">
    <property name="text">
-    <string>edit</string>
+    <string>Undo</string>
    </property>
   </action>
   <action name="actionOpen_Optimizer">
@@ -473,6 +471,21 @@
   <action name="actionOptimize">
    <property name="text">
     <string>Optimize</string>
+   </property>
+  </action>
+  <action name="actionTruss_Preferences">
+   <property name="text">
+    <string>Truss Preferences</string>
+   </property>
+  </action>
+  <action name="actionRedo">
+   <property name="text">
+    <string>Redo</string>
+   </property>
+  </action>
+  <action name="actionOpen_Change_Log">
+   <property name="text">
+    <string>Open Change Log</string>
    </property>
   </action>
  </widget>

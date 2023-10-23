@@ -7,7 +7,7 @@ import pickle
 import sys
 import typing
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF
+from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF, QThread, QTimer
 from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent, QColor, QPainterPath
 from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
 from .forms.supports.supports import SupportForm
@@ -15,7 +15,7 @@ from .forms.forces.forces import ForceForm
 
 from pytruss import Member, Mesh, Support, Joint, Force
 from matplotlib import pyplot as plt
-
+from torch import optim
 
 FORCE_SCALE = 10
 JOINT_SIZE = 20
@@ -171,7 +171,7 @@ class PreviewJointItem(JointItem):
 
     def __init__(self, radius=50) -> None:
         # initail a new joint object to be added
-        super().__init__(Joint(0, 0), radius, True)
+        super().__init__(Joint(0, 0, False), radius, True)
 
     def paint(self, painter: QPainter | None, option: QStyleOptionGraphicsItem | None, widget: QWidget | None = ...) -> None:
         return super().paint(painter, option, widget)
@@ -488,6 +488,48 @@ class ForceItem(TrussItem):
         pass
 
 
+class TrainThread(QThread):
+    finished = pyqtSignal()
+
+    def __init__(self, truss: Mesh, settings: dict) -> None:
+        super().__init__()
+        self.settings = settings
+        self.truss = truss
+        if settings["optimizer"] == "SGD":
+            self.optimizer = optim.SGD
+        elif settings["optimizer"] == "Adam":
+            self.optimizer = optim.Adam
+
+    def run(self) -> None:
+        settings = self.settings
+        self.truss.optimize_cost(
+            member_cost=settings["member_cost"],
+            joint_cost=settings["joint_cost"],
+            lr=settings["lr"],
+            epochs=settings["epochs"],
+            optimizer=self.optimizer,
+            print_mesh=False,
+            show_at_epoch=False,
+            min_member_length=settings["min_member_length"],
+            max_member_length=settings["max_member_length"],
+            max_tensile_force=settings["max_tensile_force"],
+            max_compresive_force=settings["max_compressive_force"],
+            constriant_agression=settings["constraint_aggression"],
+            progress_bar=True,
+            show_metrics=False,
+            update_metrics_interval=settings["update_metrics_interval"],
+        )
+        self.finished.emit()
+
+
+class SavedTruss:
+    def __init__(self, truss, settings, **kwargs) -> None:
+        self.truss = truss
+        self.settings = settings
+        for key, val in kwargs.items():
+            self.__setattr__(key, val)
+
+
 class TrussWidget(QGraphicsView):
 
     interacted = pyqtSignal()
@@ -516,24 +558,46 @@ class TrussWidget(QGraphicsView):
         self.edits = []
 
         self.truss_optimization_settings = {
+            # optimization settings
             "member_cost": 10,
             "joint_cost": 10,
             "lr": 0.01,
-            "epochs": 10,
-            "optimizer": None,
-            "min_member_length": None,
-            "max_member_length": None,
-            "max_tensile_force": None,
-            "max_compressive_force": None,
-            "constraint_aggression": None,
+            "epochs": 5000,
+            "optimizer": "SGD",
+            "min_member_length": 10,
+            "max_member_length": 1000,
+            "max_tensile_force": 10,
+            "max_compressive_force": 10,
+            "constraint_aggression": 2,
             "progress_bar": True,
-            "show_metrics": True,
+            "show_metrics": False,
             "update_metrics_interval": 100,
             "save_frequency": 1000,
-            "save_path": None
+            "save_path": None,
+            "frame_rate": 1,
+        }
+        self.truss_general_settings = {
+            "support_color": "",
+            "support_size": "",
+            "member_color": "",
+            "member_size": "",
+            "force_color": "",
+            "force_head_width": "",
+            "force_head_length": "",
+            "scale_factor": "",
+            "joint_color": "",
+            "joint_focused_color": "",
+            "joint_radius": "",
         }
 
         self.loadTrussWidgetFromMesh()
+
+    def saveTruss(self, optional_suffix=""):
+        save_object = SavedTruss(self.truss, self.truss_optimization_settings)
+        with open(self.file + optional_suffix + ("" if self.file.endswith(".trss") else ".trss"), "wb") as f:
+            pickle.dump(save_object, f)
+
+        self.edits.clear()
 
     def resetScene(self):
         self.scene().clear()
@@ -548,9 +612,10 @@ class TrussWidget(QGraphicsView):
 
         if load_from_file and self.file is not None:
             with open(self.file, "rb") as f:
-                mesh: Mesh = pickle.load(f)
+                saved_truss: SavedTruss = pickle.load(f)
 
-            self.truss = mesh
+            self.truss = saved_truss.truss
+            self.truss_optimization_settings = saved_truss.settings
 
         # maybe make function to add widget to scene since its used a lot
         for joint in self.truss.joints:
@@ -613,7 +678,7 @@ class TrussWidget(QGraphicsView):
 
     def addJoint(self, joint: Joint):
         temp = Joint(0, 10+1e-5)
-        new_joint = Joint(joint.x_coordinate, joint.y_coordinate)
+        new_joint = Joint(joint.x_coordinate, joint.y_coordinate, True)
         mem = Member(temp, new_joint)
         self.truss.add_member(mem)
         self.truss.delete_joint(temp)
@@ -713,6 +778,29 @@ class TrussWidget(QGraphicsView):
     def paintEvent(self, event: QPaintEvent | None) -> None:
         self.interacted.emit()
         return super().paintEvent(event)
+
+    def startTraining(self):
+        print("starting")
+        plt.ion()
+        self.training_thread.start()
+        self.training_timer.setInterval(
+            int(1000/self.truss_optimization_settings["frame_rate"])
+        )
+        self.training_timer.start()
+
+    def updateTrainingData(self):
+        training_axes = plt.subplot()
+        training_axes.cla()
+        self.truss.show(ax=training_axes)
+        plt.pause(1e-10)
+
+    def handleFinishedTraining(self):
+        print("ending")
+        plt.ioff()
+        plt.close()
+        self.training_timer.stop()
+        self.training_thread.terminate()
+        print("done")
 
 
 def main():
