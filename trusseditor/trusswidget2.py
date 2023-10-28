@@ -1,25 +1,18 @@
-import typing
-from PyQt6 import QtCore
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget, QApplication, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsEllipseItem
-from pytruss import Mesh, Member, Force, Joint
 import copy
 
-import sys
-import typing
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF, QThread, QTimer, QLineF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent, QColor, QPainterPath, QBrush
-from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture, QGraphicsLineItem
-from .forms.supports.supports import SupportForm
-from .forms.forces.forces import ForceForm
-from .saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
 
-from pytruss import Member, Mesh, Support, Joint, Force
+from pytruss import Mesh, Member, Force, Joint, Support
 from matplotlib import pyplot as plt
 from torch import optim
 
-# add this to truss settings
-FORCE_SIZE = 2
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget, QApplication, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsEllipseItem
+from PyQt6.QtCore import QEvent, QPointF, Qt, pyqtSignal, QRectF, QThread, QLineF
+from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush
+from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
+
+from .forms.supports.supports import SupportForm
+from .forms.forces.forces import ForceForm
+from .saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
 
 
 class TrussItem(QGraphicsItem):
@@ -792,9 +785,11 @@ class TrussWidget(QGraphicsView):
             elif support_type == "Roller Pin":
                 support = Support(joint, "rp")
                 addSupportDetails(support)
+
             elif support_type == "Fixed":
                 support = Support(joint, "f")
                 addSupportDetails(support)
+
             else:
                 print(ValueError(
                     f"Support type {support_type} not recognised"))
@@ -868,36 +863,8 @@ class TrussWidget(QGraphicsView):
         plt.pause(1e-10)
 
     def resetViewSettings(self):
-        print(DEFAULT_VIEW_PREFERENCES)
         self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
-        print(self.truss_view_preferences)
 
     def resetOptimizationSettings(self):
         self.truss_optimization_settings = copy.copy(
             DEFAULT_OPTIMIZATION_SETTINGS)
-
-
-def main():
-    app = QApplication(sys.argv)
-    window = TrussWidget()
-
-    joint1 = JointItem(Joint(0, 0))
-    joint2 = JointItem(Joint(100, 100))
-
-    window.addJoint(joint1.joint)
-    window.addJoint(joint2.joint)
-    joint1.setSelected(True)
-    joint2.setSelected(True)
-
-    window.addMember()
-
-    app.installEventFilter(window)
-    window.setWindowTitle('Circle Example')
-    window.setGeometry(100, 100, 400, 400)
-
-    window.show()
-    sys.exit(app.exec())
-
-
-if __name__ == "__main__":
-    main()

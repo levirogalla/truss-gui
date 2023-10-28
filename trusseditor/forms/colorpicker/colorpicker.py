@@ -9,12 +9,11 @@
 #                                       #
 # ------------------------------------- #
 
-import sys
+
 import colorsys
 
 from PyQt6.QtCore import (QPoint, Qt, pyqtSignal)
-from PyQt6.QtGui import QColor, QMouseEvent
-from PyQt6.QtWidgets import (QApplication, QDialog, QMainWindow)
+from PyQt6.QtWidgets import (QDialog)
 
 
 from .colorpicker_ui import Ui_ColorPicker as Ui_Main

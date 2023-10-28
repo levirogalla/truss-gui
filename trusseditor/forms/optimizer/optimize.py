@@ -1,19 +1,14 @@
-import sys
-import typing
+import copy
 
-from pytruss import Support, Mesh
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal, QTimer
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QPainterPath
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QDialog, QFileDialog
-from .optimize_ui import Ui_Dialog
-from typing import Callable
-from ...trusswidget2 import TrussWidget, TrainThread
-from ...saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS
-from torch import optim
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-import copy
+
+from PyQt6.QtCore import QTimer
+from PyQt6.QtWidgets import QDialog, QFileDialog
+
+from .optimize_ui import Ui_Dialog
+from ...trusswidget2 import TrussWidget, TrainThread
+from ...saveopen import SavedTruss
 
 
 class OptimizeDialog(QDialog):

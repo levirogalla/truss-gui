@@ -1,13 +1,8 @@
-import sys
-import typing
-
-from pytruss import Support
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QPainterPath
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QDialog
-from .checksave_ui import Ui_Changes
 from typing import Callable
+
+from PyQt6.QtWidgets import QDialog
+
+from .checksave_ui import Ui_Changes
 
 
 class CheckSaveForm(QDialog):

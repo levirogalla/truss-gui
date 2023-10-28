@@ -1,14 +1,7 @@
-
-import sys
-import typing
-
-from pytruss import Support
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QPainterPath
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton
-from .forceAddForm_ui import Ui_addForceForm
 from typing import Callable
+
+from PyQt6.QtWidgets import QWidget
+from .forceAddForm_ui import Ui_addForceForm
 
 
 class ForceForm(QWidget):

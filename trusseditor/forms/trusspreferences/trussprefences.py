@@ -1,13 +1,7 @@
-import sys
-import typing
+from PyQt6.QtGui import QMouseEvent
+from PyQt6.QtWidgets import QDialog
 
-from pytruss import Support
-from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QPainterPath
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QDialog
 from .trusspreferences_ui import Ui_trussPreferences
-from typing import Callable
 from ..colorpicker.colorpicker import ColorPicker
 from ...trusswidget2 import TrussWidget
 from ...saveopen import DEFAULT_VIEW_PREFERENCES

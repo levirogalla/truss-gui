@@ -1,14 +1,12 @@
 """Gui for pytruss."""
 
 import sys
-import typing
-from PyQt6 import QtGui
-from PyQt6.QtCore import QEvent, QObject, Qt
+
 from PyQt6.QtGui import QMouseEvent
 from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
-from trusseditor.trusswidget2 import JointItem, TrussWidget, SavedTruss
+
 from mainwindow_ui import Ui_MainWindow
-from pytruss import Mesh
+from trusseditor.trusswidget2 import JointItem, TrussWidget
 from trusseditor.forms.checksave.checksave import CheckSaveForm
 from trusseditor.forms.optimizer.optimize import OptimizeDialog
 from trusseditor.forms.trusspreferences.trussprefences import TrussPreferences
