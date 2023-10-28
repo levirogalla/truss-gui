@@ -381,9 +381,19 @@
     <property name="title">
      <string>Edit</string>
     </property>
+    <widget class="QMenu" name="menuDelete">
+     <property name="title">
+      <string>Delete</string>
+     </property>
+     <addaction name="actionJoint"/>
+     <addaction name="actionMember"/>
+     <addaction name="actionForce"/>
+     <addaction name="actionSupport"/>
+    </widget>
     <addaction name="actionedit"/>
     <addaction name="actionRedo"/>
     <addaction name="separator"/>
+    <addaction name="menuDelete"/>
    </widget>
    <widget class="QMenu" name="menuSolve">
     <property name="title">
@@ -391,6 +401,9 @@
     </property>
     <addaction name="actionSolve_Reactions"/>
     <addaction name="actionSolve_Members"/>
+    <addaction name="separator"/>
+    <addaction name="actionClear_Reactions"/>
+    <addaction name="actionClear_Members"/>
     <addaction name="separator"/>
     <addaction name="actionOpen_Optimizer"/>
    </widget>
@@ -401,6 +414,7 @@
     <addaction name="actionView_in_MPL"/>
     <addaction name="separator"/>
     <addaction name="actionTruss_Preferences"/>
+    <addaction name="separator"/>
    </widget>
    <addaction name="menuFile"/>
    <addaction name="menuEdit"/>
@@ -486,6 +500,46 @@
   <action name="actionOpen_Change_Log">
    <property name="text">
     <string>Open Change Log</string>
+   </property>
+  </action>
+  <action name="actionClear_Reactions">
+   <property name="text">
+    <string>Clear Reactions</string>
+   </property>
+  </action>
+  <action name="actionClear_Members">
+   <property name="text">
+    <string>Clear Members</string>
+   </property>
+  </action>
+  <action name="actionDelete_Member">
+   <property name="text">
+    <string>Delete Member...</string>
+   </property>
+  </action>
+  <action name="actionDelete_Force">
+   <property name="text">
+    <string>Delete Force...</string>
+   </property>
+  </action>
+  <action name="actionJoint">
+   <property name="text">
+    <string>Joint...</string>
+   </property>
+  </action>
+  <action name="actionMember">
+   <property name="text">
+    <string>Member...</string>
+   </property>
+  </action>
+  <action name="actionForce">
+   <property name="text">
+    <string>Force...</string>
+   </property>
+  </action>
+  <action name="actionSupport">
+   <property name="text">
+    <string>Support...</string>
    </property>
   </action>
  </widget>

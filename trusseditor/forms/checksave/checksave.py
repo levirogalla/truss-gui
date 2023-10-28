@@ -6,6 +6,8 @@ from .checksave_ui import Ui_Changes
 
 
 class CheckSaveForm(QDialog):
+    """Class for check save from."""
+
     def __init__(self, parent, saveFunc: Callable, dontSaveFunc: Callable, cancelFunc: Callable) -> None:
         super().__init__(parent)
         self.ui = Ui_Changes()
@@ -19,14 +21,18 @@ class CheckSaveForm(QDialog):
         self.ui.dontSaveButton.clicked.connect(self.dontSave)
         self.ui.cancelButton.clicked.connect(self.cancel)
 
-    def save(self):
+    def save(self) -> None:
+        """Handles user saving the closed truss."""
         self.saveFunc()
-        self.accept()
-
-    def dontSave(self):
         self.dontSaveFunc()
         self.accept()
 
-    def cancel(self):
+    def dontSave(self) -> None:
+        """Doesn't save the closed truss."""
+        self.dontSaveFunc()
+        self.accept()
+
+    def cancel(self) -> None:
+        """Doesn't close or save the truss."""
         self.cancelFunc()
         self.accept()

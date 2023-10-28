@@ -12,6 +12,8 @@ from ...saveopen import SavedTruss
 
 
 class OptimizeDialog(QDialog):
+    """Class for optimization window dialog."""
+
     def __init__(self, parent: TrussWidget) -> None:
         super().__init__(parent)
 
@@ -47,11 +49,11 @@ class OptimizeDialog(QDialog):
         self.training_thread.finished.connect(self.handleFinishedTraining)
 
     # redefine for type hints
-
     def parentWidget(self) -> TrussWidget | None:
         return super().parentWidget()
 
-    def loadSettings(self):
+    def loadSettings(self) -> None:
+        """Load current settings."""
         parent = self.parentWidget()
 
         self.ui.memberCostLineEdit.setText(
@@ -97,7 +99,8 @@ class OptimizeDialog(QDialog):
             parent.truss_optimization_settings["frame_rate"]
         )
 
-    def applySettings(self):
+    def applySettings(self) -> None:
+        """Apply new settings to truss."""
         parent = self.parentWidget()
 
         # try converting input to proper type otherwise clear the input
@@ -214,15 +217,16 @@ class OptimizeDialog(QDialog):
 
         print(parent.truss_optimization_settings)
 
-    def selectPath(self):
+    def selectPath(self) -> None:
+        """Handels select path dialog for save path."""
         dialog = QFileDialog(self)
         dialog.setAcceptMode(QFileDialog.AcceptMode.AcceptSave)
         dialog.setFileMode(QFileDialog.FileMode.Directory)
         path = dialog.getExistingDirectory(caption="Select Save Path")
         self.ui.savePathSelection.setText(path)
 
-    def startTraining(self):
-        print("starting")
+    def startTraining(self) -> None:
+        """Starts optimizing the truss on a new thread."""
         self.ui.progressBar.setMaximum(
             self.parentWidget().truss_optimization_settings["epochs"]
         )
@@ -233,7 +237,8 @@ class OptimizeDialog(QDialog):
         )
         self.training_timer.start()
 
-    def updateTrainingData(self):
+    def updateTrainingData(self) -> None:
+        """Updates truss optimization data."""
         self.axes.cla()
         self.new_truss.show(ax=self.axes)
         self.figure.canvas.draw_idle()
@@ -241,13 +246,15 @@ class OptimizeDialog(QDialog):
             self.new_truss.training_progress()
         )
 
-    def resetSettings(self):
+    def resetSettings(self) -> None:
+        """Resets optimization settings to default."""
         self.parentWidget().resetOptimizationSettings()
         self.loadSettings()
         self.update()
         self.applySettings()
 
-    def handleFinishedTraining(self):
+    def handleFinishedTraining(self) -> None:
+        """Handles finished training."""
         self.updateTrainingData()
         self.handleSave("final-")
         self.training_timer.stop()
@@ -256,7 +263,8 @@ class OptimizeDialog(QDialog):
     def closeEvent(self, a0) -> None:
         super().closeEvent(a0)
 
-    def handleSave(self, optional_prefix=""):
+    def handleSave(self, optional_prefix="") -> None:
+        """Handles saving the new truss to saved path."""
         optim_settings = self.parentWidget().truss_optimization_settings
         view_preferences = self.parentWidget().truss_view_preferences
         file_name = self.parentWidget().file.split("/")[-1]
@@ -272,5 +280,6 @@ class OptimizeDialog(QDialog):
         except Exception as e:
             print(e)
 
-    def handleStop(self):
+    def handleStop(self) -> None:
+        """Stops the training."""
         print(NotImplemented)

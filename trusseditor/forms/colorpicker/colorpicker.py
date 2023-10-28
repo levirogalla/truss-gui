@@ -233,7 +233,8 @@ class ColorPicker(QDialog):
         return (r, g, b)
 
     @staticmethod
-    def getColorInRGB(parent):
+    def getColorInRGB(parent) -> tuple[int, int, int]:
+        """Opens a dialog to select color and return that color in RGB format."""
         dialog = ColorPicker(parent)
         dialog.exec()
         return dialog.getRGB()

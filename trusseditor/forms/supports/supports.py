@@ -5,6 +5,8 @@ from .supportAddForm_ui import Ui_addSupportForm
 
 
 class SupportForm(QWidget):
+    """Class for add support form."""
+
     def __init__(self, joints: set, selected_joint, destroySupportFormRefrence: Callable, addSupportToGui: Callable) -> None:
         super().__init__(None)
         self.ui = Ui_addSupportForm()
@@ -19,7 +21,8 @@ class SupportForm(QWidget):
         self.addSupportToGui = addSupportToGui
         self.selected_joint = selected_joint
 
-    def addSupport(self):
+    def addSupport(self) -> None:
+        """Handles adding support."""
         try:
             self.addSupportToGui(
                 self.joints[self.ui.select_joint.currentText()], self.ui.select_type.currentText())

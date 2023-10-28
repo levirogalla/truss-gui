@@ -8,6 +8,8 @@ from ...saveopen import DEFAULT_VIEW_PREFERENCES
 
 
 class TrussPreferences(QDialog):
+    """Class for truss view preferences dialog."""
+
     def __init__(self, parent) -> None:
         super().__init__(parent)
         self.ui = Ui_trussPreferences()
@@ -63,7 +65,8 @@ class TrussPreferences(QDialog):
 
         return super().mouseDoubleClickEvent(a0)
 
-    def loadCurrentSettings(self):
+    def loadCurrentSettings(self) -> None:
+        """Loads the current truss settings onto the dialog."""
         settings = self.parentWidget().truss_view_preferences
 
         self.joint_color = settings['joint_color']
@@ -94,7 +97,8 @@ class TrussPreferences(QDialog):
         self.ui.headLengthDoubleSpinBox.setValue(settings["force_head_length"])
         self.ui.headWidthDoubleSpinBox.setValue(settings["force_head_width"])
 
-    def applySettings(self):
+    def applySettings(self) -> None:
+        """Applys the new truss settings to the truss."""
         parent = self.parentWidget()
         parent.truss_view_preferences["support_color"] = self.support_color
         parent.truss_view_preferences["force_color"] = self.force_color
@@ -119,7 +123,8 @@ class TrussPreferences(QDialog):
 
         self.close()
 
-    def resetSettings(self):
+    def resetSettings(self) -> None:
+        """Resets truss settings to default."""
         self.parentWidget().resetViewSettings()
         self.loadCurrentSettings()
         print(self.parentWidget().truss_view_preferences)

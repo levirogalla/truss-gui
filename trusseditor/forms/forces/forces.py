@@ -5,6 +5,8 @@ from .forceAddForm_ui import Ui_addForceForm
 
 
 class ForceForm(QWidget):
+    """Class for add force form."""
+
     def __init__(self, joints: set, selected_joint, destroyForceFormRefrence, addForceToGui: Callable) -> None:
         super().__init__(None)
         self.ui = Ui_addForceForm()
@@ -19,7 +21,8 @@ class ForceForm(QWidget):
         self.addForceToGui = addForceToGui
         self.selected_joint = selected_joint
 
-    def addForce(self):
+    def addForce(self) -> None:
+        """Handles adding the force."""
         try:
             self.addForceToGui(
                 self.joints[self.ui.select_joint.currentText()],

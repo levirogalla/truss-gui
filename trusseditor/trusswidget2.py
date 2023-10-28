@@ -16,27 +16,33 @@ from .saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PR
 
 
 class TrussItem(QGraphicsItem):
+    """Base class for truss graphics item item."""
+
     def __init__(self) -> None:
         super().__init__()
 
-    def convertCordinate(self, Y):
+    def convertCordinate(self, Y: float) -> float:
         """Converts Y coordinate from scene to cartesian and Vice Versa."""
         new_y = self.sceneBoundingRect().height() - Y
         return new_y
 
-    def getConnection(self, truss_item_id):
-        "Retruns a connection from the widget connections."
+    def getConnection(self, truss_item_id: int) -> Force | Member | Joint | Support | None:
+        """Retruns a connection from the widget connections."""
         try:
             item = self.scene().views()[0].connections[truss_item_id]
             return item
         except KeyError as error:
             print(f"{truss_item_id} not found")
 
-    def logChange(self, event):
+    def logChange(self, event) -> None:
+        """Logs a change to the edits array."""
+        # shouldn't this be local to the truss??
+        # maybe both for error tracking
         self.scene().views()[0].edits.append(event)
 
 
 class JointItem(TrussItem):
+    """Class for Qt Joint Item"""
 
     def __init__(self, joint: Joint = None, radius=50, preview=False, color=(0, 0, 0), focused_color=(0, 0, 0), border_color=(0, 0, 0)) -> None:
         super().__init__()
@@ -55,6 +61,7 @@ class JointItem(TrussItem):
         # self.setFlag(self.)
 
     def paint(self, painter: QPainter | None, option: QStyleOptionGraphicsItem | None, widget: QWidget | None = ...) -> None:
+        """Paint the joint item."""
         # Define the circle's properties
         if self.__dragging_mode:
             circle_color = QColor(*self.__focused_color)
@@ -68,25 +75,28 @@ class JointItem(TrussItem):
         brush = QBrush(circle_color, Qt.BrushStyle.SolidPattern)
         border_brush = QBrush(QColor(*self.__border_color))
         pen = QPen(border_brush, self.radius*0.03)
+
         painter.setPen(pen)
         painter.setBrush(brush)
+
+        # use shape to draw item
         path = self.shape()
         painter.drawPath(path)
-        # painter.drawEllipse(int(-self.radius/2), int(-self.radius/2),
-        #                     int(self.radius),
-        #                     int(self.radius))
 
     def boundingRect(self) -> QRectF:
+        """Gets the bounding rectangle."""
         rect = QRectF(-self.radius/2, -self.radius/2, self.radius, self.radius)
         return rect
 
     def shape(self) -> QPainterPath:
+        """Defines the shape/hitarea of the joint."""
         path = QPainterPath()
         path.addEllipse(-self.radius/2, -self.radius/2,
                         self.radius, self.radius)
         return path
 
     def itemChange(self, change, value):
+        """Update the pytruss joint location on changes the the qt joint item."""
         if change == QGraphicsItem.GraphicsItemChange.ItemSceneHasChanged:
             self.updateSceneLocation()
         elif self.scene() is not None:
@@ -94,24 +104,21 @@ class JointItem(TrussItem):
         return super().itemChange(change, value)
 
     def updateSceneLocation(self) -> None:
-        # point = self.mapToScene(self.joint.x_coordinate,
-        #                         self.convertCordinate(
-        #                             self.joint.y_coordinate) - self.radius
-        #                         )
-
+        """Updates the qt joint item location with the pytruss joint coordinates."""
         point = QPointF(self.joint.x_coordinate,
                         self.convertCordinate(
                             self.joint.y_coordinate) - self.radius)
         self.setPos(point)
 
     def updateCartesianLocation(self) -> None:
-
+        """Updates the pytruss joint coordinates with the qt coordinates."""
         self.joint.set_cordinates(
             [self.scenePos().x(),
              self.convertCordinate(self.scenePos().y()) - self.radius]
         )
 
-    def clearModes(self):
+    def clearModes(self) -> None:
+        """Clears all attributes related to dragging or selecting the joint."""
         self.setSelected(False)
         self.__dragging = False
         self.__dragging_mode = False
@@ -164,12 +171,9 @@ class JointItem(TrussItem):
         self.update()
         self.scene().update()
 
-    def getCenter(self) -> QPointF:
-        center = self.scenePos()
-        return center
-
 
 class PreviewJointItem(JointItem):
+    """Extends Joint Item to be a preview joint."""
 
     def __init__(self, radius=50) -> None:
         # initail a new joint object to be added
@@ -180,6 +184,7 @@ class PreviewJointItem(JointItem):
 
 
 class MemberItem(TrussItem):
+    """Class for Qt Member Item."""
 
     def __init__(self, thickness, member: Member, color=(0, 0, 0)):
         super().__init__()
@@ -290,6 +295,8 @@ class MemberItem(TrussItem):
 
 
 class SupportItem(TrussItem):
+    """Class for Qt Support Item."""
+
     def __init__(self, size, support: Support, color=(0, 0, 0)) -> None:
         super().__init__()
         self.r = size
@@ -302,6 +309,7 @@ class SupportItem(TrussItem):
 
     @property
     def offset(self) -> QPointF:
+        """Gets the location of the joint item it is attached to."""
         joint_item = self.getConnection(id(self.support.joint)).scenePos()
         return joint_item
 
@@ -378,6 +386,8 @@ class SupportItem(TrussItem):
 
 
 class ForceItem(TrussItem):
+    """Class for Qt Force Item."""
+
     def __init__(self, force: Force, thickness, force_scale=10, head_width=10, head_length=30, color=(0, 0, 0)) -> None:
         super().__init__()
         self.force = force
@@ -393,6 +403,7 @@ class ForceItem(TrussItem):
 
     @property
     def offset(self) -> QPointF:
+        """Gets the location the joint item it is attached to."""
         offset = self.getConnection(id(self.force.joint)).scenePos()
         return offset
 
@@ -506,6 +517,7 @@ class ForceItem(TrussItem):
 
 
 class TrainThread(QThread):
+    """Class for optimizing truss on seperate cpu thread."""
     finished = pyqtSignal()
 
     def __init__(self, truss: Mesh, settings: dict) -> None:
@@ -540,14 +552,14 @@ class TrainThread(QThread):
 
 
 class TrussWidget(QGraphicsView):
-
+    """Class for the truss graphics view."""
     interacted = pyqtSignal()
     joint_added = pyqtSignal()
     member_added = pyqtSignal()
     support_added = pyqtSignal()
     force_added = pyqtSignal()
 
-    def __init__(self, file: str = None):
+    def __init__(self, file: str = None) -> None:
         super().__init__()
         # settings
         self.truss_optimization_settings = copy.copy(
@@ -585,7 +597,8 @@ class TrussWidget(QGraphicsView):
         self.updateOrigin()
         self.loadTrussWidgetFromMesh()
 
-    def updateOrigin(self, draw_new=False):
+    def updateOrigin(self, draw_new=False) -> None:
+        """Update the size of the origin relative to zoom."""
 
         view_size = 1/self.transform().m11() * self.sceneRect().width()
 
@@ -612,13 +625,15 @@ class TrussWidget(QGraphicsView):
             v_line
         }
 
-    def saveTruss(self, optional_suffix=""):
+    def saveTruss(self, optional_suffix="") -> None:
+        """Save truss."""
         save_object = SavedTruss(
             self.truss, self.truss_optimization_settings, self.truss_view_preferences)
         save_object.save(self.file, optional_suffix)
         self.edits.clear()
 
-    def resetScene(self):
+    def resetScene(self) -> None:
+        """Clears all truss items of scene."""
         self.scene().clear()
         self.connections.clear()
         self.preview_joint = PreviewJointItem(
@@ -627,7 +642,9 @@ class TrussWidget(QGraphicsView):
         self.updateOrigin(draw_new=True)
         self.preview_joint.hide()
 
-    def loadTrussWidgetFromMesh(self, load_from_file=True):
+    def loadTrussWidgetFromMesh(self, load_from_file: bool = True) -> None:
+        """Clears all current truss items and redraws them either from a file or from memory."""
+
         # delete all existing items on scene
         self.resetScene()
 
@@ -686,16 +703,18 @@ class TrussWidget(QGraphicsView):
             self.gestureEvent(event)
         return super().event(event)
 
-    def gestureEvent(self, event: QGestureEvent):
+    def gestureEvent(self, event: QGestureEvent) -> None:
         if isinstance(event.gesture(Qt.GestureType.PinchGesture), QPinchGesture):
             self.pinchTriggered(event.gesture(Qt.GestureType.PinchGesture))
 
-    def pinchTriggered(self, gesture: QPinchGesture):
+    def pinchTriggered(self, gesture: QPinchGesture) -> None:
+        """Scale the view from pinch gesture."""
         scale_factor = gesture.scaleFactor()
         self.scale(scale_factor, scale_factor)
         self.updateOrigin()
 
-    def previewJoint(self):
+    def previewJoint(self) -> None:
+        """Show the preview joint. This is the first function to be called when attempting to add a joint."""
         self.showing_preview_joint = True
         self.preview_joint.show()
 
@@ -708,7 +727,7 @@ class TrussWidget(QGraphicsView):
         return super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
-        # has mouse tracking is only enabled when a joint is being previewed
+        # if preview joint is showing add a joint at that location and hid preview
         if self.showing_preview_joint:
             self.showing_preview_joint = False
             self.preview_joint.hide()
@@ -717,7 +736,8 @@ class TrussWidget(QGraphicsView):
 
         return super().mousePressEvent(event)
 
-    def addJoint(self, joint: Joint):
+    def addJoint(self, joint: Joint) -> None:
+        """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
         temp = Joint(0, 10+1e-5)
         new_joint = Joint(joint.x_coordinate, joint.y_coordinate, True)
         mem = Member(temp, new_joint)
@@ -732,12 +752,12 @@ class TrussWidget(QGraphicsView):
             self.truss_view_preferences["joint_focused_color"]
         )
         self.connections[id(new_joint)] = item
-        print("here", self.connections)
         self.scene().addItem(item)
         self.joint_added.emit()
         self.edits.append("Joint added")
 
-    def addMember(self):
+    def addMember(self) -> None:
+        """Adds a member for every combination of the selected joints."""
         visted: set[Joint] = set()
         items = self.scene().selectedItems()
         for j1 in items:
@@ -758,15 +778,19 @@ class TrussWidget(QGraphicsView):
         self.member_added.emit()
         self.edits.append("Member added")
 
-    def destroyForm(self, form: QWidget):
+    def destroyForm(self, form: QWidget) -> None:
+        """Destroys a form."""
         self.forms.remove(form)
         for joint_item in self.findChildren(JointItem):
             joint_item: JointItem
             joint_item.setSelected(False)
 
-    def supportForm(self):
-        def addSupport(joint, support_type):
-            def addSupportDetails(support):
+    def supportForm(self) -> None:
+        """Handles the add support form."""
+        def addSupport(joint, support_type: str) -> None:
+            """Callback function to handle selection of joint type."""
+            def addSupportDetails(support: Support):
+                """Callback function to add the support to the joint and truss."""
                 self.truss.add_support(support)
                 supWidg = SupportItem(
                     self.truss_view_preferences["support_size"],
@@ -810,8 +834,10 @@ class TrussWidget(QGraphicsView):
             form.show()
             self.forms.add(form)
 
-    def forceForm(self):
-        def addForce(joint: Joint, x: float, y: float):
+    def forceForm(self) -> None:
+        """Handle the force form."""
+        def addForce(joint: Joint, x: float, y: float) -> None:
+            """Callback function to add the force to the joint and truss."""
             force = Force(joint, x, y)
             self.truss.apply_force(force)
             force_item = ForceItem(
@@ -847,24 +873,11 @@ class TrussWidget(QGraphicsView):
         self.interacted.emit()
         return super().paintEvent(event)
 
-    def startTraining(self):
-        print("starting")
-        plt.ion()
-        self.training_thread.start()
-        self.training_timer.setInterval(
-            int(1000/self.truss_optimization_settings["frame_rate"])
-        )
-        self.training_timer.start()
-
-    def updateTrainingData(self):
-        training_axes = plt.subplot()
-        training_axes.cla()
-        self.truss.show(ax=training_axes)
-        plt.pause(1e-10)
-
-    def resetViewSettings(self):
+    def resetViewSettings(self) -> None:
+        """Resets the view settings."""
         self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
 
-    def resetOptimizationSettings(self):
+    def resetOptimizationSettings(self) -> None:
+        """Resets the optimization settings."""
         self.truss_optimization_settings = copy.copy(
             DEFAULT_OPTIMIZATION_SETTINGS)

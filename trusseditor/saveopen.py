@@ -1,5 +1,6 @@
 import pickle
 import copy
+from pytruss import Mesh
 
 DEFAULT_OPTIMIZATION_SETTINGS = {
     # optimization settings
@@ -35,21 +36,23 @@ DEFAULT_VIEW_PREFERENCES = {
     "joint_radius": 5,
 }
 
-# this object should be made before every save event to ensure all new features and settings are acounted for
-
 
 class SavedTruss:
-    def __init__(self, truss, optimization_settings: dict = copy.copy(DEFAULT_OPTIMIZATION_SETTINGS), view_preferences: dict = copy.copy(DEFAULT_VIEW_PREFERENCES)) -> None:
+    """Handles creating of truss save object that will be pickled. This object should be made before every save event to ensure all new features and settings are acounted for."""
+
+    def __init__(self, truss: Mesh, optimization_settings: dict = copy.copy(DEFAULT_OPTIMIZATION_SETTINGS), view_preferences: dict = copy.copy(DEFAULT_VIEW_PREFERENCES)) -> None:
         self.truss = truss
         self.optimization_settings = optimization_settings
         self.view_preferences = view_preferences
 
-    def save(self, file: str, optional_suffix="", optional_prefix=""):
+    def save(self, file: str, optional_suffix="", optional_prefix="") -> None:
+        """Saves the truss and settings."""
         with open(optional_prefix + file + optional_suffix + ("" if file.endswith(".trss") else ".trss"), "wb") as f:
             pickle.dump(self, f)
 
     @staticmethod
     def load(file: str) -> "SavedTruss":
+        """Loads the truss and settings."""
         with open(file, "rb") as f:
             saved_truss: SavedTruss = pickle.load(f)
 
