@@ -2,7 +2,6 @@
 
 import sys
 import typing
-import pickle
 from PyQt6 import QtGui
 from PyQt6.QtCore import QEvent, QObject, Qt
 from PyQt6.QtGui import QMouseEvent

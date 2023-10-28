@@ -1,19 +1,19 @@
 import sys
 import typing
 
-from pytruss import Support
+from pytruss import Support, Mesh
 from PyQt6 import QtCore, QtGui
 from PyQt6.QtCore import QEvent, QObject, QPoint, Qt, pyqtSignal, QTimer
 from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QPainterPath
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QDialog, QFileDialog
 from .optimize_ui import Ui_Dialog
 from typing import Callable
-from ...trusswidget2 import TrussWidget, TrainThread, SavedTruss
+from ...trusswidget2 import TrussWidget, TrainThread
+from ...saveopen import SavedTruss
 from torch import optim
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 import copy
-import pickle
 
 
 class OptimizeDialog(QDialog):
@@ -247,28 +247,25 @@ class OptimizeDialog(QDialog):
 
     def handleFinishedTraining(self):
         self.updateTrainingData()
+        self.handleSave("final-")
         self.training_timer.stop()
         self.training_thread.terminate()
-        self.handleSave("final-")
 
     def closeEvent(self, a0) -> None:
         super().closeEvent(a0)
 
     def handleSave(self, optional_prefix=""):
-        settings = self.parentWidget().truss_optimization_settings
+        optim_settings = self.parentWidget().truss_optimization_settings
+        view_preferences = self.parentWidget().truss_view_preferences
         file_name = self.parentWidget().file.split("/")[-1]
 
         try:
             epoch = self.new_truss.training_progress()
             saved_truss = SavedTruss(
-                copy.copy(self.new_truss), settings)
-
+                copy.copy(self.new_truss), optim_settings, view_preferences)
             saved_truss.truss.delete_epochs_counter()
-
-            print(saved_truss.truss.__dict__)
-
-            with open(settings["save_path"] + "/" + optional_prefix + str(epoch) + file_name, "wb") as f:
-                pickle.dump(saved_truss, f)
+            saved_truss.save(
+                optim_settings["save_path"] + "/" + optional_prefix + str(epoch) + file_name)
 
         except Exception as e:
             print(e)

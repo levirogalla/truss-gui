@@ -68,7 +68,7 @@ class ColorPicker(QDialog):
     def getRGB(self, range=255):
         r, g, b = self.i(self.ui.red.text()), self.i(
             self.ui.green.text()), self.i(self.ui.blue.text())
-        return (r*(range/255.0), g*(range/255.0), b*(range/255.0))
+        return (int(r*(range/255.0)), int(g*(range/255.0)), int(b*(range/255.0)))
 
     def getHex(self, ht=False):
         rgb = (self.i(self.ui.red.text()), self.i(
@@ -234,7 +234,7 @@ class ColorPicker(QDialog):
         return (r, g, b)
 
     @staticmethod
-    def getColorInHEX(parent):
+    def getColorInRGB(parent):
         dialog = ColorPicker(parent)
         dialog.exec()
-        return dialog.getHex()
+        return dialog.getRGB()

@@ -3,27 +3,23 @@ from PyQt6 import QtCore
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget, QApplication, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsEllipseItem
 from pytruss import Mesh, Member, Force, Joint
 
-import pickle
+
 import sys
 import typing
 from PyQt6 import QtCore, QtGui
-from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF, QThread, QTimer
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent, QColor, QPainterPath
-from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
+from PyQt6.QtCore import QEvent, QObject, QPointF, Qt, pyqtSignal, QRectF, QSizeF, QThread, QTimer, QLineF
+from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QCursor, QKeyEvent, QColor, QPainterPath, QBrush
+from PyQt6.QtWidgets import QApplication, QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture, QGraphicsLineItem
 from .forms.supports.supports import SupportForm
 from .forms.forces.forces import ForceForm
+from .saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
 
 from pytruss import Member, Mesh, Support, Joint, Force
 from matplotlib import pyplot as plt
 from torch import optim
 
-FORCE_SCALE = 10
-JOINT_SIZE = 20
-SUPPORT_SIZE = JOINT_SIZE*2
+# add this to truss settings
 FORCE_SIZE = 2
-MEMBER_SIZE = 10
-FORCE_HEAD_LENGTH = 20
-FORCE_HEAD_WIDTH = 10
 
 
 class TrussItem(QGraphicsItem):
@@ -49,13 +45,16 @@ class TrussItem(QGraphicsItem):
 
 class JointItem(TrussItem):
 
-    def __init__(self, joint: Joint = None, radius=50, preview=False) -> None:
+    def __init__(self, joint: Joint = None, radius=50, preview=False, color=(0, 0, 0), focused_color=(0, 0, 0), border_color=(0, 0, 0)) -> None:
         super().__init__()
 
         self.joint = joint
         self.__dragging_mode = False
         self.__dragging = False
         self.__preview = preview
+        self.__color = color
+        self.__focused_color = focused_color
+        self.__border_color = border_color
         self.radius = radius
 
         # make item selectable
@@ -65,18 +64,24 @@ class JointItem(TrussItem):
     def paint(self, painter: QPainter | None, option: QStyleOptionGraphicsItem | None, widget: QWidget | None = ...) -> None:
         # Define the circle's properties
         if self.__dragging_mode:
-            circle_color = QColor(85, 120, 255)
+            circle_color = QColor(*self.__focused_color)
         elif self.isSelected():
             circle_color = QColor(175, 220, 255)
         elif self.__preview:
             circle_color = QColor(115, 150, 255, 100)
         else:
-            circle_color = QColor(115, 150, 255)
+            circle_color = QColor(*self.__color)
 
-        painter.setBrush(circle_color)
-        painter.drawEllipse(int(-self.radius/2), int(-self.radius/2),
-                            int(self.radius),
-                            int(self.radius))
+        brush = QBrush(circle_color, Qt.BrushStyle.SolidPattern)
+        border_brush = QBrush(QColor(*self.__border_color))
+        pen = QPen(border_brush, self.radius*0.03)
+        painter.setPen(pen)
+        painter.setBrush(brush)
+        path = self.shape()
+        painter.drawPath(path)
+        # painter.drawEllipse(int(-self.radius/2), int(-self.radius/2),
+        #                     int(self.radius),
+        #                     int(self.radius))
 
     def boundingRect(self) -> QRectF:
         rect = QRectF(-self.radius/2, -self.radius/2, self.radius, self.radius)
@@ -179,10 +184,11 @@ class PreviewJointItem(JointItem):
 
 class MemberItem(TrussItem):
 
-    def __init__(self, thickness, member: Member):
+    def __init__(self, thickness, member: Member, color=(0, 0, 0)):
         super().__init__()
         self.thickness = thickness
         self.member = member
+        self.__color = color
 
         # make item selectable
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable)
@@ -197,7 +203,7 @@ class MemberItem(TrussItem):
         if self.isSelected():
             color = QColor(175, 220, 255)
         else:
-            color = QColor(0, 0, 0)
+            color = QColor(*self.__color)
 
         path = self.shape()
 
@@ -287,10 +293,11 @@ class MemberItem(TrussItem):
 
 
 class SupportItem(TrussItem):
-    def __init__(self, size, support: Support) -> None:
+    def __init__(self, size, support: Support, color=(0, 0, 0)) -> None:
         super().__init__()
         self.r = size
         self.support = support
+        self.__color = color
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
 
         # stack under members
@@ -344,7 +351,7 @@ class SupportItem(TrussItem):
         if self.isSelected():
             color = QColor(175, 220, 255)
         else:
-            color = QColor(0, 0, 0)
+            color = QColor(*self.__color)
 
         path = self.shape()
 
@@ -362,13 +369,14 @@ class SupportItem(TrussItem):
 
 
 class ForceItem(TrussItem):
-    def __init__(self, force: Force, thickness, force_scale=10, head_width=10, head_length=30) -> None:
+    def __init__(self, force: Force, thickness, force_scale=10, head_width=10, head_length=30, color=(0, 0, 0)) -> None:
         super().__init__()
         self.force = force
         self.force_scale = force_scale
         self.head_length = head_length
         self.head_width = head_width
         self.thickness = thickness
+        self.__color = color
         self.setFlag(self.GraphicsItemFlag.ItemIsSelectable, True)
 
         # stack ontop members
@@ -471,7 +479,7 @@ class ForceItem(TrussItem):
         if self.isSelected():
             color = QColor(175, 220, 255)
         else:
-            color = QColor(0, 0, 0)
+            color = QColor(*self.__color)
 
         path = self.shape()
 
@@ -522,14 +530,6 @@ class TrainThread(QThread):
         self.finished.emit()
 
 
-class SavedTruss:
-    def __init__(self, truss, settings, **kwargs) -> None:
-        self.truss = truss
-        self.settings = settings
-        for key, val in kwargs.items():
-            self.__setattr__(key, val)
-
-
 class TrussWidget(QGraphicsView):
 
     interacted = pyqtSignal()
@@ -540,6 +540,10 @@ class TrussWidget(QGraphicsView):
 
     def __init__(self, file: str = None):
         super().__init__()
+        # settings
+        self.truss_optimization_settings = DEFAULT_OPTIMIZATION_SETTINGS
+        self.truss_view_preferences = DEFAULT_VIEW_PREFERENCES
+
         self.truss = Mesh()
         self.file = file
         self.truss_scene = QGraphicsScene(self)
@@ -549,61 +553,68 @@ class TrussWidget(QGraphicsView):
         self.setTransformationAnchor(self.ViewportAnchor.AnchorUnderMouse)
         self.setMouseTracking(False)
         self.connections = dict()
-        self.preview_joint = PreviewJointItem(JOINT_SIZE)
+        self.preview_joint = PreviewJointItem(
+            self.truss_view_preferences["joint_radius"])
         self.scene().addItem(self.preview_joint)
         self.preview_joint.hide()
         self.forms: set[QWidget] = set()
+        self.setMouseTracking(True)
+        self.showing_preview_joint = False
+
+        # origin lines
+        self.origin = {
+            self.scene().addLine(
+                QLineF(0, self.width()/2, 0, -self.width()/2)),
+            self.scene().addLine(
+                QLineF(self.width()/2, 0, -self.width()/2, 0))
+        }
 
         # track changes made
         self.edits = []
-
-        self.truss_optimization_settings = {
-            # optimization settings
-            "member_cost": 10,
-            "joint_cost": 10,
-            "lr": 0.01,
-            "epochs": 5000,
-            "optimizer": "SGD",
-            "min_member_length": 10,
-            "max_member_length": 1000,
-            "max_tensile_force": 10,
-            "max_compressive_force": 10,
-            "constraint_aggression": 2,
-            "progress_bar": True,
-            "show_metrics": False,
-            "update_metrics_interval": 100,
-            "save_frequency": 1000,
-            "save_path": None,
-            "frame_rate": 1,
-        }
-        self.truss_general_settings = {
-            "support_color": "",
-            "support_size": "",
-            "member_color": "",
-            "member_size": "",
-            "force_color": "",
-            "force_head_width": "",
-            "force_head_length": "",
-            "scale_factor": "",
-            "joint_color": "",
-            "joint_focused_color": "",
-            "joint_radius": "",
-        }
-
+        self.scale(10, 10)
+        self.updateOrigin()
         self.loadTrussWidgetFromMesh()
 
-    def saveTruss(self, optional_suffix=""):
-        save_object = SavedTruss(self.truss, self.truss_optimization_settings)
-        with open(self.file + optional_suffix + ("" if self.file.endswith(".trss") else ".trss"), "wb") as f:
-            pickle.dump(save_object, f)
+    def updateOrigin(self, draw_new=False):
 
+        view_size = 1/self.transform().m11() * self.sceneRect().width()
+
+        if self.width() < self.height():
+            pen = QPen(QColor(0, 0, 0), view_size*0.005)
+        else:
+            pen = QPen(QColor(0, 0, 0), view_size*0.005)
+
+        if not draw_new:
+            self.scene().removeItem(self.origin.pop())
+            self.scene().removeItem(self.origin.pop())
+
+        h_line = self.scene().addLine(
+            QLineF(view_size/15, 0, -view_size/15, 0), pen
+        )
+        v_line = self.scene().addLine(
+            QLineF(0, view_size/15, 0, -view_size/15), pen
+        )
+        h_line.setZValue(100)
+        v_line.setZValue(100)
+
+        self.origin = {
+            h_line,
+            v_line
+        }
+
+    def saveTruss(self, optional_suffix=""):
+        save_object = SavedTruss(
+            self.truss, self.truss_optimization_settings, self.truss_view_preferences)
+        save_object.save(self.file, optional_suffix)
         self.edits.clear()
 
     def resetScene(self):
         self.scene().clear()
         self.connections.clear()
-        self.preview_joint = PreviewJointItem(JOINT_SIZE)
+        self.preview_joint = PreviewJointItem(
+            self.truss_view_preferences["joint_radius"])
         self.scene().addItem(self.preview_joint)
+        self.updateOrigin(draw_new=True)
         self.preview_joint.hide()
 
     def loadTrussWidgetFromMesh(self, load_from_file=True):
@@ -611,31 +622,50 @@ class TrussWidget(QGraphicsView):
         self.resetScene()
 
         if load_from_file and self.file is not None:
-            with open(self.file, "rb") as f:
-                saved_truss: SavedTruss = pickle.load(f)
-
+            saved_truss = SavedTruss.load(self.file)
             self.truss = saved_truss.truss
-            self.truss_optimization_settings = saved_truss.settings
+            self.truss_optimization_settings = saved_truss.optimization_settings
+            self.truss_view_preferences = saved_truss.view_preferences
 
         # maybe make function to add widget to scene since its used a lot
         for joint in self.truss.joints:
-            joint_widget = JointItem(joint, JOINT_SIZE)
+            joint_widget = JointItem(
+                joint,
+                self.truss_view_preferences["joint_radius"],
+                False,
+                self.truss_view_preferences["joint_color"],
+                self.truss_view_preferences["joint_focused_color"])
+
             self.connections[id(joint)] = joint_widget
             self.scene().addItem(self.connections[id(joint)])
 
         for member in self.truss.members:
-            member_widget = MemberItem(MEMBER_SIZE, member)
+            member_widget = MemberItem(
+                self.truss_view_preferences["member_size"],
+                member,
+                self.truss_view_preferences["member_color"]
+            )
             self.connections[id(member)] = member_widget
             self.scene().addItem(self.connections[id(member)])
 
         for support in self.truss.supports:
-            support_widget = SupportItem(SUPPORT_SIZE, support)
+            support_widget = SupportItem(
+                self.truss_view_preferences["support_size"],
+                support,
+                self.truss_view_preferences["support_color"]
+            )
             self.connections[id(support)] = support_widget
             self.scene().addItem(self.connections[id(support)])
 
         for force in self.truss.forces:
             force_widget = ForceItem(
-                force, FORCE_SIZE, FORCE_SCALE, FORCE_HEAD_WIDTH, FORCE_HEAD_LENGTH)
+                force,
+                self.truss_view_preferences["member_size"],
+                self.truss_view_preferences["scale_factor"],
+                self.truss_view_preferences["force_head_width"],
+                self.truss_view_preferences["force_head_length"],
+                self.truss_view_preferences["force_color"]
+            )
             self.connections[id(force)] = force_widget
             self.scene().addItem(self.connections[id(force)])
 
@@ -653,9 +683,10 @@ class TrussWidget(QGraphicsView):
     def pinchTriggered(self, gesture: QPinchGesture):
         scale_factor = gesture.scaleFactor()
         self.scale(scale_factor, scale_factor)
+        self.updateOrigin()
 
     def previewJoint(self):
-        self.setMouseTracking(True)
+        self.showing_preview_joint = True
         self.preview_joint.show()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
@@ -668,8 +699,8 @@ class TrussWidget(QGraphicsView):
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         # has mouse tracking is only enabled when a joint is being previewed
-        if self.hasMouseTracking():
-            self.setMouseTracking(False)
+        if self.showing_preview_joint:
+            self.showing_preview_joint = False
             self.preview_joint.hide()
             self.addJoint(self.preview_joint.joint)
             return
@@ -683,7 +714,13 @@ class TrussWidget(QGraphicsView):
         self.truss.add_member(mem)
         self.truss.delete_joint(temp)
 
-        item = JointItem(new_joint, JOINT_SIZE)
+        item = JointItem(
+            new_joint,
+            self.truss_view_preferences["joint_radius"],
+            False,
+            self.truss_view_preferences["joint_color"],
+            self.truss_view_preferences["joint_focused_color"]
+        )
         self.connections[id(new_joint)] = item
         self.scene().addItem(item)
         self.joint_added.emit()
@@ -698,7 +735,11 @@ class TrussWidget(QGraphicsView):
                     if j1.joint != j2.joint and j2.joint not in visted:
                         member = Member(j1.joint, j2.joint)
                         self.truss.add_member(member)
-                        item = MemberItem(MEMBER_SIZE, member)
+                        item = MemberItem(
+                            self.truss_view_preferences["member_size"],
+                            member,
+                            self.truss_view_preferences["member_color"]
+                        )
                         self.connections[id(member)] = item
                         self.scene().addItem(item)
             visted.add(j1.joint)
@@ -716,7 +757,11 @@ class TrussWidget(QGraphicsView):
         def addSupport(joint, support_type):
             def addSupportDetails(support):
                 self.truss.add_support(support)
-                supWidg = SupportItem(SUPPORT_SIZE, support)
+                supWidg = SupportItem(
+                    self.truss_view_preferences["support_size"],
+                    support,
+                    self.truss_view_preferences["support_color"]
+                )
                 self.connections[id(support)] = supWidg
                 self.scene().addItem(supWidg)
                 self.support_added.emit()
@@ -754,7 +799,13 @@ class TrussWidget(QGraphicsView):
             force = Force(joint, x, y)
             self.truss.apply_force(force)
             force_item = ForceItem(
-                force, FORCE_SIZE, FORCE_SCALE, FORCE_HEAD_WIDTH, FORCE_HEAD_LENGTH)
+                force,
+                self.truss_view_preferences["member_size"],
+                self.truss_view_preferences["scale_factor"],
+                self.truss_view_preferences["force_head_width"],
+                self.truss_view_preferences["force_head_length"],
+                self.truss_view_preferences["force_color"]
+            )
             self.connections[id(force)] = force_item
             self.scene().addItem(force_item)
             self.force_added.emit()
@@ -793,14 +844,6 @@ class TrussWidget(QGraphicsView):
         training_axes.cla()
         self.truss.show(ax=training_axes)
         plt.pause(1e-10)
-
-    def handleFinishedTraining(self):
-        print("ending")
-        plt.ioff()
-        plt.close()
-        self.training_timer.stop()
-        self.training_thread.terminate()
-        print("done")
 
 
 def main():
