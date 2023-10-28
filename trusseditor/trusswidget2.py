@@ -2,7 +2,7 @@ import typing
 from PyQt6 import QtCore
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneHoverEvent, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget, QApplication, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsEllipseItem
 from pytruss import Mesh, Member, Force, Joint
-
+import copy
 
 import sys
 import typing
@@ -545,8 +545,9 @@ class TrussWidget(QGraphicsView):
     def __init__(self, file: str = None):
         super().__init__()
         # settings
-        self.truss_optimization_settings = DEFAULT_OPTIMIZATION_SETTINGS
-        self.truss_view_preferences = DEFAULT_VIEW_PREFERENCES
+        self.truss_optimization_settings = copy.copy(
+            DEFAULT_OPTIMIZATION_SETTINGS)
+        self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
 
         self.truss = Mesh()
         self.file = file
@@ -851,6 +852,15 @@ class TrussWidget(QGraphicsView):
         training_axes.cla()
         self.truss.show(ax=training_axes)
         plt.pause(1e-10)
+
+    def resetViewSettings(self):
+        print(DEFAULT_VIEW_PREFERENCES)
+        self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
+        print(self.truss_view_preferences)
+
+    def resetOptimizationSettings(self):
+        self.truss_optimization_settings = copy.copy(
+            DEFAULT_OPTIMIZATION_SETTINGS)
 
 
 def main():

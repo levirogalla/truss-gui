@@ -10,6 +10,7 @@ from .trusspreferences_ui import Ui_trussPreferences
 from typing import Callable
 from ..colorpicker.colorpicker import ColorPicker
 from ...trusswidget2 import TrussWidget
+from ...saveopen import DEFAULT_VIEW_PREFERENCES
 
 
 class TrussPreferences(QDialog):
@@ -125,4 +126,7 @@ class TrussPreferences(QDialog):
         self.close()
 
     def resetSettings(self):
-        pass
+        self.parentWidget().resetViewSettings()
+        self.loadCurrentSettings()
+        print(self.parentWidget().truss_view_preferences)
+        self.update()

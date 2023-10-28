@@ -9,7 +9,7 @@ from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QPushButton, QDi
 from .optimize_ui import Ui_Dialog
 from typing import Callable
 from ...trusswidget2 import TrussWidget, TrainThread
-from ...saveopen import SavedTruss
+from ...saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS
 from torch import optim
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
@@ -26,6 +26,7 @@ class OptimizeDialog(QDialog):
 
         # slots
         self.ui.applySettingsButton.pressed.connect(self.applySettings)
+        self.ui.resetSettingsButton.pressed.connect(self.resetSettings)
         self.ui.selectPathButton.pressed.connect(self.selectPath)
         # implement default settings
         self.ui.startButton.pressed.connect(self.startTraining)
@@ -244,6 +245,12 @@ class OptimizeDialog(QDialog):
         self.ui.progressBar.setValue(
             self.new_truss.training_progress()
         )
+
+    def resetSettings(self):
+        self.parentWidget().resetOptimizationSettings()
+        self.loadSettings()
+        self.update()
+        self.applySettings()
 
     def handleFinishedTraining(self):
         self.updateTrainingData()

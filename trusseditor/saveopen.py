@@ -1,4 +1,5 @@
 import pickle
+import copy
 
 DEFAULT_OPTIMIZATION_SETTINGS = {
     # optimization settings
@@ -38,7 +39,7 @@ DEFAULT_VIEW_PREFERENCES = {
 
 
 class SavedTruss:
-    def __init__(self, truss, optimization_settings: dict = DEFAULT_OPTIMIZATION_SETTINGS, view_preferences: dict = DEFAULT_VIEW_PREFERENCES) -> None:
+    def __init__(self, truss, optimization_settings: dict = copy.copy(DEFAULT_OPTIMIZATION_SETTINGS), view_preferences: dict = copy.copy(DEFAULT_VIEW_PREFERENCES)) -> None:
         self.truss = truss
         self.optimization_settings = optimization_settings
         self.view_preferences = view_preferences
