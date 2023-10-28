@@ -255,8 +255,8 @@ class OptimizeDialog(QDialog):
 
     def handleFinishedTraining(self) -> None:
         """Handles finished training."""
-        self.updateTrainingData()
         self.handleSave("final-")
+        self.updateTrainingData()
         self.training_timer.stop()
         self.training_thread.terminate()
 
@@ -265,6 +265,7 @@ class OptimizeDialog(QDialog):
 
     def handleSave(self, optional_prefix="") -> None:
         """Handles saving the new truss to saved path."""
+
         optim_settings = self.parentWidget().truss_optimization_settings
         view_preferences = self.parentWidget().truss_view_preferences
         file_name = self.parentWidget().file.split("/")[-1]
@@ -273,7 +274,9 @@ class OptimizeDialog(QDialog):
             epoch = self.new_truss.training_progress()
             saved_truss = SavedTruss(
                 copy.copy(self.new_truss), optim_settings, view_preferences)
+
             saved_truss.truss.delete_epochs_counter()
+
             saved_truss.save(
                 optim_settings["save_path"] + "/" + optional_prefix + str(epoch) + file_name)
 
