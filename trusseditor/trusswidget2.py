@@ -101,10 +101,14 @@ class JointItem(TrussItem):
         return super().itemChange(change, value)
 
     def updateSceneLocation(self) -> None:
-        point = self.mapToScene(self.joint.x_coordinate,
-                                self.convertCordinate(
-                                    self.joint.y_coordinate) - self.radius
-                                )
+        # point = self.mapToScene(self.joint.x_coordinate,
+        #                         self.convertCordinate(
+        #                             self.joint.y_coordinate) - self.radius
+        #                         )
+
+        point = QPointF(self.joint.x_coordinate,
+                        self.convertCordinate(
+                            self.joint.y_coordinate) - self.radius)
         self.setPos(point)
 
     def updateCartesianLocation(self) -> None:
@@ -722,6 +726,7 @@ class TrussWidget(QGraphicsView):
             self.truss_view_preferences["joint_focused_color"]
         )
         self.connections[id(new_joint)] = item
+        print("here", self.connections)
         self.scene().addItem(item)
         self.joint_added.emit()
         self.edits.append("Joint added")
@@ -787,6 +792,7 @@ class TrussWidget(QGraphicsView):
                 form.show()
                 self.forms.add(form)
                 no_selected_joints = False
+                selected_joint.clearModes()
 
         if no_selected_joints:
             form = SupportForm(
@@ -819,6 +825,7 @@ class TrussWidget(QGraphicsView):
                 form.show()
                 self.forms.add(form)
                 no_selected_joints = False
+                selected_joint.clearModes()
 
         if no_selected_joints:
             form = ForceForm(

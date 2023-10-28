@@ -30,7 +30,7 @@ class MainWindow(QMainWindow):
         # file actions
         self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
         self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
-        self.ui.actionSave_As.triggered.connect(self.handleSave)
+        self.ui.actionSave_As.triggered.connect(self.saveAs)
         self.ui.actionSave.triggered.connect(self.handleSave)
 
         # solve actions
@@ -82,8 +82,12 @@ class MainWindow(QMainWindow):
         truss_widget.loadTrussWidgetFromMesh(False)
         self.updateInfo()
 
+    def saveAs(self, optional_suffix=""):
+        current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
+        current_truss.file = None
+        self.handleSave()
+
     def handleSave(self, optional_suffix=""):
-        print("here")
         current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
 
         if current_truss.file is None:
@@ -106,6 +110,7 @@ class MainWindow(QMainWindow):
         openFileDialog.setNameFilter("Truss Files (*.trss);; All Files (*)")
         openFileDialog.show()
 
+        files = []
         if openFileDialog.exec():
             files = openFileDialog.selectedFiles()
 
@@ -219,14 +224,31 @@ class MainWindow(QMainWindow):
         self.connectInfoSignals()
 
     def updateJointLocation(self, row, col):
-        for jointWidget in self.findChildren(JointItem):
-            jointWidget: JointItem
-            if str(id(jointWidget.joint)) == self.ui.jointInfo.item(row, 0).text():
-                x = self.ui.jointInfo.item(row, 1).text()
-                y = self.ui.jointInfo.item(row, 2).text()
-                jointWidget.joint.set_cordinates([float(x), float(y)])
-                jointWidget.updateSceneLocation()
-        self.ui.tabWidget.currentWidget().update()
+        try:
+            joint_id = self.ui.jointInfo.item(row, 0).text()
+            joint_item: JointItem = self.current_tab.connections[int(joint_id)]
+            joint = joint_item.joint
+
+            # changed x val
+            if col == 1:
+                joint.set_x(float(self.ui.jointInfo.item(row, col).text()))
+
+            # changed y val
+            elif col == 2:
+                joint.set_y(float(self.ui.jointInfo.item(row, col).text()))
+
+            # changed movable
+            elif col == 3:
+                new_val = self.ui.jointInfo.item(row, col).text()
+                if new_val == "True":
+                    joint.set_track_grad(True)
+                elif new_val == "False":
+                    joint.set_track_grad(False)
+
+            joint_item.updateSceneLocation()
+            self.current_tab.scene().update()
+        except Exception as e:
+            print(e)
 
     def updateInfo(self):
         self.disconnectInfoSignals()
