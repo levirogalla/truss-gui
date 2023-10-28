@@ -342,6 +342,18 @@ class SupportItem(TrussItem):
 
             return path.translated(self.offset)
 
+        elif Support.Base.base_to_code(self.support.base) == "f":
+            # Move the pen to the starting point
+            path.moveTo(0, 0)
+            path.lineTo(-self.r/2, 0)  # Draw a line to a point
+            path.lineTo(-self.r/2, self.r)  # Draw another line
+            # Draw another line
+            path.lineTo(self.r/2, self.r)
+            path.lineTo(self.r/2, 0)
+            path.lineTo(0, 0)
+
+            return path.translated(self.offset)
+
     def boundingRect(self) -> QRectF:
         rect = QRectF(-self.r/2, 0, self.r, self.r)
         return rect.translated(self.offset)
@@ -780,7 +792,9 @@ class TrussWidget(QGraphicsView):
             elif support_type == "Roller Pin":
                 support = Support(joint, "rp")
                 addSupportDetails(support)
-
+            elif support_type == "Fixed":
+                support = Support(joint, "f")
+                addSupportDetails(support)
             else:
                 print(ValueError(
                     f"Support type {support_type} not recognised"))
