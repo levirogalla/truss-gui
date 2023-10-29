@@ -2,10 +2,9 @@ import copy
 
 
 from pytruss import Mesh, Member, Force, Joint, Support
-from matplotlib import pyplot as plt
 from torch import optim
 
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget, QApplication, QGraphicsScene, QGraphicsView, QGraphicsRectItem, QGraphicsLineItem, QGraphicsEllipseItem
+from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
 from PyQt6.QtCore import QEvent, QPointF, Qt, pyqtSignal, QRectF, QThread, QLineF
 from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush
 from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
@@ -13,6 +12,7 @@ from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEven
 from .forms.supports.supports import SupportForm
 from .forms.forces.forces import ForceForm
 from .saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
+from .forms.jointmenu.jointmenu import JointMenu
 
 
 class TrussItem(QGraphicsItem):
@@ -132,14 +132,20 @@ class JointItem(TrussItem):
             self.scene().update()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        if self.__dragging_mode and event.button() == Qt.MouseButton.LeftButton:
-            self.__dragging = True
-            self.offset = event.pos()
-            self.setCursor(Qt.CursorShape.ClosedHandCursor)
-        else:
-            self.setSelected(not self.isSelected())
+        if event.button() == Qt.MouseButton.LeftButton:
+            if self.__dragging_mode:
+                self.__dragging = True
+                self.offset = event.pos()
+                self.setCursor(Qt.CursorShape.ClosedHandCursor)
+            else:
+                self.setSelected(not self.isSelected())
+            self.scene().update()
 
-        self.scene().update()
+        if event.button() == Qt.MouseButton.RightButton:
+            menu = JointMenu(self.scene().views()[0], self)
+            menu.exec(self.scene().views()[
+                      0].mapToGlobal(self.scene().views()[
+                          0].mapFromScene(self.scenePos())))
 
     def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
         if self.__dragging:
@@ -719,8 +725,7 @@ class TrussWidget(QGraphicsView):
         self.preview_joint.show()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
-        # has mouse tracking is only enabled when a joint is being previewed
-        if self.hasMouseTracking():
+        if self.showing_preview_joint:
             self.preview_joint.setPos(self.mapToScene(event.pos()))
             self.preview_joint.updateCartesianLocation()
             self.scene().update()
@@ -756,6 +761,28 @@ class TrussWidget(QGraphicsView):
         self.joint_added.emit()
         self.edits.append("Joint added")
 
+    def deleteJoint(self, joint: Joint) -> None:
+        joint_item: JointItem = self.connections[id(joint)]
+
+        for mem in joint.members:
+            mem_item: MemberItem = self.connections[id(mem)]
+            self.scene().removeItem(mem_item)
+            self.connections.pop(id(mem))
+
+        for force in joint.forces:
+            force_item: ForceItem = self.connections[id(force)]
+            self.scene().removeItem(force_item)
+            self.connections.pop(id((force)))
+
+        if joint.support is not None:
+            sup_item: SupportItem = self.connections[id((joint.support))]
+            self.scene().removeItem(sup_item)
+            self.connections.pop(id(joint.support))
+
+        self.truss.delete_joint(joint)
+        self.scene().removeItem(joint_item)
+        self.connections.pop(id(joint))
+
     def addMember(self) -> None:
         """Adds a member for every combination of the selected joints."""
         visted: set[Joint] = set()
@@ -778,6 +805,12 @@ class TrussWidget(QGraphicsView):
         self.member_added.emit()
         self.edits.append("Member added")
 
+    def deleteMember(self, member: Member):
+        self.truss.delete_member(member)
+        member_item: MemberItem = self.connections[id(member)]
+        self.scene().removeItem(member_item)
+        self.connections.pop(id(member))
+
     def destroyForm(self, form: QWidget) -> None:
         """Destroys a form."""
         self.forms.remove(form)
@@ -785,44 +818,51 @@ class TrussWidget(QGraphicsView):
             joint_item: JointItem
             joint_item.setSelected(False)
 
+    def addSupport(self, joint, support_type: str) -> None:
+        """Callback function to handle selection of joint type."""
+        def addSupportDetails(support: Support):
+            """Callback function to add the support to the joint and truss."""
+            self.truss.add_support(support)
+            supWidg = SupportItem(
+                self.truss_view_preferences["support_size"],
+                support,
+                self.truss_view_preferences["support_color"]
+            )
+            self.connections[id(support)] = supWidg
+            self.scene().addItem(supWidg)
+            self.support_added.emit()
+            self.edits.append(f"{support} added")
+
+        if support_type == "Fixed Pin":
+            support = Support(joint, "p")
+            addSupportDetails(support)
+
+        elif support_type == "Roller Pin":
+            support = Support(joint, "rp")
+            addSupportDetails(support)
+
+        elif support_type == "Fixed":
+            support = Support(joint, "f")
+            addSupportDetails(support)
+
+        else:
+            print(ValueError(
+                f"Support type {support_type} not recognised"))
+
+    def deleteSupport(self, support: Force):
+        self.truss.delete_support(support)
+        support_item: SupportItem = self.connections[id(support)]
+        self.scene().removeItem(support_item)
+        self.connections.pop(id(support))
+
     def supportForm(self) -> None:
         """Handles the add support form."""
-        def addSupport(joint, support_type: str) -> None:
-            """Callback function to handle selection of joint type."""
-            def addSupportDetails(support: Support):
-                """Callback function to add the support to the joint and truss."""
-                self.truss.add_support(support)
-                supWidg = SupportItem(
-                    self.truss_view_preferences["support_size"],
-                    support,
-                    self.truss_view_preferences["support_color"]
-                )
-                self.connections[id(support)] = supWidg
-                self.scene().addItem(supWidg)
-                self.support_added.emit()
-                self.edits.append(f"{support} added")
-
-            if support_type == "Fixed Pin":
-                support = Support(joint, "p")
-                addSupportDetails(support)
-
-            elif support_type == "Roller Pin":
-                support = Support(joint, "rp")
-                addSupportDetails(support)
-
-            elif support_type == "Fixed":
-                support = Support(joint, "f")
-                addSupportDetails(support)
-
-            else:
-                print(ValueError(
-                    f"Support type {support_type} not recognised"))
 
         no_selected_joints = True
         for selected_joint in self.scene().selectedItems():
             if isinstance(selected_joint, JointItem):
                 form = SupportForm(
-                    self.truss.joints, selected_joint.joint, self.destroyForm, addSupport)
+                    self.truss.joints, selected_joint.joint, self.destroyForm, self.addSupport)
                 form.show()
                 self.forms.add(form)
                 no_selected_joints = False
@@ -834,30 +874,37 @@ class TrussWidget(QGraphicsView):
             form.show()
             self.forms.add(form)
 
+    def addForce(self, joint: Joint, x: float, y: float) -> None:
+        """Callback function to add the force to the joint and truss."""
+        force = Force(joint, x, y)
+        self.truss.apply_force(force)
+        force_item = ForceItem(
+            force,
+            self.truss_view_preferences["member_size"],
+            self.truss_view_preferences["scale_factor"],
+            self.truss_view_preferences["force_head_width"],
+            self.truss_view_preferences["force_head_length"],
+            self.truss_view_preferences["force_color"]
+        )
+        self.connections[id(force)] = force_item
+        self.scene().addItem(force_item)
+        self.force_added.emit()
+        self.edits.append(f"{force} added")
+
+    def deleteForce(self, force: Force):
+        self.truss.delete_force(force)
+        force_item: ForceItem = self.connections[id(force)]
+        self.scene().removeItem(force_item)
+        self.connections.pop(id(force))
+
     def forceForm(self) -> None:
         """Handle the force form."""
-        def addForce(joint: Joint, x: float, y: float) -> None:
-            """Callback function to add the force to the joint and truss."""
-            force = Force(joint, x, y)
-            self.truss.apply_force(force)
-            force_item = ForceItem(
-                force,
-                self.truss_view_preferences["member_size"],
-                self.truss_view_preferences["scale_factor"],
-                self.truss_view_preferences["force_head_width"],
-                self.truss_view_preferences["force_head_length"],
-                self.truss_view_preferences["force_color"]
-            )
-            self.connections[id(force)] = force_item
-            self.scene().addItem(force_item)
-            self.force_added.emit()
-            self.edits.append(f"{force} added")
 
         no_selected_joints = True
         for selected_joint in self.scene().selectedItems():
             if isinstance(selected_joint, JointItem):
                 form = ForceForm(
-                    self.truss.joints, selected_joint.joint, self.destroyForm, addForce)
+                    self.truss.joints, selected_joint.joint, self.destroyForm, self.addForce)
                 form.show()
                 self.forms.add(form)
                 no_selected_joints = False
@@ -865,7 +912,7 @@ class TrussWidget(QGraphicsView):
 
         if no_selected_joints:
             form = ForceForm(
-                self.truss.joints, None, self.destroyForm, addForce)
+                self.truss.joints, None, self.destroyForm, self.addForce)
             form.show()
             self.forms.add(form)
 
