@@ -261,6 +261,7 @@ class OptimizeDialog(QDialog):
         self.training_thread.terminate()
 
     def closeEvent(self, a0) -> None:
+        self.handleStop()
         super().closeEvent(a0)
 
     def handleSave(self, optional_prefix="") -> None:
@@ -285,4 +286,5 @@ class OptimizeDialog(QDialog):
 
     def handleStop(self) -> None:
         """Stops the training."""
+        self.new_truss.stop_training()
         print(NotImplemented)
