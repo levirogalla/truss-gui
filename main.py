@@ -2,13 +2,16 @@
 
 import sys
 
-from PyQt6.QtWidgets import QFileDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
+from PyQt6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
+from PyQt6.QtCore import Qt
+from pytruss import Force, Member, Joint, Support
 
 from mainwindow_ui import Ui_MainWindow
 from trusseditor.trusswidget2 import JointItem, TrussWidget
 from trusseditor.forms.checksave.checksave import CheckSaveForm
 from trusseditor.forms.optimizer.optimize import OptimizeDialog
 from trusseditor.forms.trusspreferences.trussprefences import TrussPreferences
+from trusseditor.forms.manageitems.manageitems import TrussItems
 
 
 class MainWindow(QMainWindow):
@@ -29,6 +32,12 @@ class MainWindow(QMainWindow):
         self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.connect(self.saveAs)
         self.ui.actionSave.triggered.connect(self.handleSave)
+
+        # edit actions
+        self.ui.actionForce.triggered.connect(self.openForcesTable)
+        self.ui.actionMember.triggered.connect(self.openMembersTable)
+        self.ui.actionSupport.triggered.connect(self.openSupportsTable)
+        self.ui.actionJoint.triggered.connect(self.openJointsTable)
 
         # solve actions
         self.ui.actionSolve_Members.triggered.connect(
@@ -54,6 +63,8 @@ class MainWindow(QMainWindow):
         self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
         self.setUpButtonSignals()
         self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
+
+        self.dialogs = set()
 
     def openTrussPreferences(self) -> None:
         """Opens the view preferences dialog."""
@@ -388,6 +399,34 @@ class MainWindow(QMainWindow):
         if self.ui.tabWidget.currentWidget().connections[id(truss_item)] is not None:
             return self.ui.tabWidget.currentWidget().connections[id(truss_item)].isSelected()
         return False
+
+    def deleteDialog(self, dialog: QDialog):
+        dialog.deleteLater()
+        self.dialogs.remove(dialog)
+
+    def openForcesTable(self):
+        dialog = TrussItems(self.current_tab, Force)
+        dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
+
+    def openJointsTable(self):
+        dialog = TrussItems(self.current_tab, Joint)
+        dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
+
+    def openMembersTable(self):
+        dialog = TrussItems(self.current_tab, Member)
+        dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
+
+    def openSupportsTable(self):
+        dialog = TrussItems(self.current_tab, Support)
+        dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
 
 def main():

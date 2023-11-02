@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file '/Users/levirogalla/Dev/Practice/Projects/truss-gui/trusseditor/forms/jointconnections/jointconnections.ui'
+# Form implementation generated from reading ui file '/Users/levirogalla/Dev/Practice/Projects/truss-gui/trusseditor/forms/manageitems/jointconnections.ui'
 #
 # Created by: PyQt6 UI code generator 6.5.2
 #
@@ -12,7 +12,9 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_Dialog(object):
     def setupUi(self, Dialog):
         Dialog.setObjectName("Dialog")
+        Dialog.setWindowModality(QtCore.Qt.WindowModality.ApplicationModal)
         Dialog.resize(550, 300)
+        Dialog.setModal(False)
         self.verticalLayout = QtWidgets.QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName("verticalLayout")
         self.connectedItems = QtWidgets.QTableWidget(parent=Dialog)

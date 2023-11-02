@@ -1,13 +1,14 @@
 from typing import Callable
 
-from PyQt6.QtWidgets import QWidget
+from PyQt6.QtWidgets import QDialog
 from .supportAddForm_ui import Ui_addSupportForm
+from pytruss import Support, Joint
 
 
-class SupportForm(QWidget):
+class SupportForm(QDialog):
     """Class for add support form."""
 
-    def __init__(self, joints: set, selected_joint, destroySupportFormRefrence: Callable, addSupportToGui: Callable) -> None:
+    def __init__(self, joints: set[Joint], selected_joint: Joint) -> None:
         super().__init__(None)
         self.ui = Ui_addSupportForm()
         self.ui.setupUi(self)
@@ -16,20 +17,17 @@ class SupportForm(QWidget):
             self.joints[f"{id(joint)}"] = joint
             self.ui.select_joint.addItem(str(id(joint)))
         self.ui.select_joint.setCurrentText(str(id(selected_joint)))
-        self.ui.supportButton.clicked.connect(self.addSupport)
-        self.destroySupportFormReference = destroySupportFormRefrence
-        self.addSupportToGui = addSupportToGui
+        self.ui.supportButton.pressed.connect(self.close)
         self.selected_joint = selected_joint
 
-    def addSupport(self) -> None:
-        """Handles adding support."""
+    @staticmethod
+    def get_support(joints: set[Joint], selected_joint: Joint) -> tuple[Joint, str]:
+        dialog = SupportForm(joints, selected_joint)
+        dialog.exec()
         try:
-            self.addSupportToGui(
-                self.joints[self.ui.select_joint.currentText()], self.ui.select_type.currentText())
-            self.destroySupportFormReference(self)
+            support_type = dialog.ui.select_type.currentText()
+            joint = dialog.joints[dialog.ui.select_joint.currentText()]
         except KeyError as error:
             print("Invalid Selection", error)
-
-    def closeEvent(self, a0) -> None:
-        self.destroySupportFormReference(self)
-        return super().closeEvent(a0)
+            return None
+        return joint, support_type

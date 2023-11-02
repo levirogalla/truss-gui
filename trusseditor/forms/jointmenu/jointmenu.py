@@ -4,7 +4,7 @@ from PyQt6.QtWidgets import QMenu, QDialog, QWidget
 from pytruss import Support, Joint, Mesh, Force, Member
 
 # from .trusswidget2 import JointItem, TrussWidget
-from ..jointconnections.jointconnection import JointConnections
+from ..manageitems.manageitems import JointConnections
 from .editCoordinates_ui import Ui_EditCoordinatesDialog
 
 
@@ -81,15 +81,15 @@ class JointMenu(QMenu):
 
     def show_supports(self):
         dialog = JointConnections(self.parent(), self.joint_item, Support)
-        dialog.exec()
+        dialog.open()
 
     def show_forces(self):
         dialog = JointConnections(self.parent(), self.joint_item, Force)
-        dialog.exec()
+        dialog.open()
 
     def show_members(self):
         dialog = JointConnections(self.parent(), self.joint_item, Member)
-        dialog.exec()
+        dialog.open()
 
     def delete_joint(self):
         self.parent().deleteJoint(self.joint_item.joint)

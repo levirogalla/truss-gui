@@ -29,6 +29,11 @@
    </item>
    <item>
     <widget class="QLineEdit" name="yCoordinate">
+     <property name="font">
+      <font>
+       <family>.AppleSystemUIFont</family>
+      </font>
+     </property>
      <property name="placeholderText">
       <string>Y Coordinate</string>
      </property>

@@ -364,7 +364,7 @@
      <x>0</x>
      <y>0</y>
      <width>983</width>
-     <height>37</height>
+     <height>24</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -383,7 +383,7 @@
     </property>
     <widget class="QMenu" name="menuDelete">
      <property name="title">
-      <string>Delete</string>
+      <string>Manage</string>
      </property>
      <addaction name="actionJoint"/>
      <addaction name="actionMember"/>
@@ -524,22 +524,27 @@
   </action>
   <action name="actionJoint">
    <property name="text">
-    <string>Joint...</string>
+    <string>Joints...</string>
    </property>
   </action>
   <action name="actionMember">
    <property name="text">
-    <string>Member...</string>
+    <string>Members...</string>
    </property>
   </action>
   <action name="actionForce">
    <property name="text">
-    <string>Force...</string>
+    <string>Forces...</string>
    </property>
   </action>
   <action name="actionSupport">
    <property name="text">
-    <string>Support...</string>
+    <string>Supports...</string>
+   </property>
+  </action>
+  <action name="actionDelete">
+   <property name="text">
+    <string>Delete</string>
    </property>
   </action>
  </widget>

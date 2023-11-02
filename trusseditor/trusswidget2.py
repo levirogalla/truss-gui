@@ -861,22 +861,19 @@ class TrussWidget(QGraphicsView):
         no_selected_joints = True
         for selected_joint in self.scene().selectedItems():
             if isinstance(selected_joint, JointItem):
-                form = SupportForm(
-                    self.truss.joints, selected_joint.joint, self.destroyForm, self.addSupport)
-                form.show()
-                self.forms.add(form)
+                joint, support_type = SupportForm.get_support(
+                    self.truss.joints, selected_joint.joint)
+                self.addSupport(joint, support_type)
                 no_selected_joints = False
                 selected_joint.clearModes()
 
         if no_selected_joints:
-            form = SupportForm(
-                self.truss.joints, None, self.destroyForm, addSupport)
-            form.show()
-            self.forms.add(form)
+            joint, support_type = SupportForm.get_support(
+                self.truss.joints, None)
+            self.addSupport(joint, support_type)
 
-    def addForce(self, joint: Joint, x: float, y: float) -> None:
+    def addForce(self, force: Force) -> None:
         """Callback function to add the force to the joint and truss."""
-        force = Force(joint, x, y)
         self.truss.apply_force(force)
         force_item = ForceItem(
             force,
@@ -903,18 +900,16 @@ class TrussWidget(QGraphicsView):
         no_selected_joints = True
         for selected_joint in self.scene().selectedItems():
             if isinstance(selected_joint, JointItem):
-                form = ForceForm(
-                    self.truss.joints, selected_joint.joint, self.destroyForm, self.addForce)
-                form.show()
-                self.forms.add(form)
+                force = ForceForm.get_force(
+                    self.truss.joints, selected_joint.joint)
+                self.addForce(force)
                 no_selected_joints = False
                 selected_joint.clearModes()
 
         if no_selected_joints:
-            form = ForceForm(
-                self.truss.joints, None, self.destroyForm, self.addForce)
-            form.show()
-            self.forms.add(form)
+            force = ForceForm.get_force(
+                self.truss.joints, None)
+            self.addForce(force)
 
     def paintEvent(self, event: QPaintEvent | None) -> None:
         self.interacted.emit()
