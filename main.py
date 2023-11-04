@@ -74,32 +74,31 @@ class MainWindow(QMainWindow):
     def handleOptimize(self) -> None:
         """Opens the optimization dialog."""
         # block current truss widget when this form is opened
-        form = OptimizeDialog(self.ui.tabWidget.currentWidget())
+        form = OptimizeDialog(self.current_tab)
         form.exec()
 
     def handleSolveReactions(self) -> None:
         """Solves and displayes support reaction forces."""
-        truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
+        truss_widget: TrussWidget = self.current_tab
         truss_widget.truss.solve_supports()
         truss_widget.loadTrussWidgetFromMesh(False)
-        self.updateInfo()
 
     def handleSolveMembers(self) -> None:
         """Solves and displays internal member forces."""
-        truss_widget: TrussWidget = self.ui.tabWidget.currentWidget()
+        truss_widget: TrussWidget = self.current_tab
         truss_widget.truss.solve_members()
         truss_widget.loadTrussWidgetFromMesh(False)
         self.updateInfo()
 
     def saveAs(self, optional_suffix: str = "") -> None:
         """Handles the save as request and open save dialog always."""
-        current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
+        current_truss: TrussWidget = self.current_tab
         current_truss.file = None
         self.handleSave()
 
     def handleSave(self, optional_suffix: str = "") -> None:
         """Handles save request and only open save dialog if the truss has never been saved before."""
-        current_truss: TrussWidget = self.ui.tabWidget.currentWidget()
+        current_truss: TrussWidget = self.current_tab
 
         if current_truss.file is None:
             saveAsDialog = QFileDialog(self)
@@ -130,6 +129,8 @@ class MainWindow(QMainWindow):
             truss_widget = TrussWidget(file)
             self.handleCreateNewTab(truss_widget)
             self.ui.tabWidget.setCurrentWidget(truss_widget)
+
+        self.updateInfo()
 
     def openTrussInMPL(self) -> None:
         """Opens the truss in Matplotlib."""
@@ -287,8 +288,8 @@ class MainWindow(QMainWindow):
         """Populates the support info table."""
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.supportInfo.setRowCount(
-            len(self.ui.tabWidget.currentWidget().truss.supports))
-        for r, support in enumerate(self.ui.tabWidget.currentWidget().truss.supports):
+            len(self.current_tab.truss.supports))
+        for r, support in enumerate(self.current_tab.truss.supports):
             self.ui.supportInfo.setItem(
                 r, 0, QTableWidgetItem(str(id(support))))
             self.ui.supportInfo.setItem(
@@ -317,10 +318,11 @@ class MainWindow(QMainWindow):
 
     def loadJoints(self) -> None:
         """Populates the joints info table."""
+
         self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.jointInfo.setRowCount(
-            len(self.ui.tabWidget.currentWidget().truss.joints))
-        for r, joint in enumerate(self.ui.tabWidget.currentWidget().truss.joints):
+            len(self.current_tab.truss.joints))
+        for r, joint in enumerate(self.current_tab.truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))
             self.ui.jointInfo.setItem(
                 r, 1, QTableWidgetItem(str(joint.x_coordinate.item()))
@@ -341,8 +343,8 @@ class MainWindow(QMainWindow):
     def loadMembers(self) -> None:
         """Populates the members info table."""
         self.ui.memberInfo.setRowCount(
-            len(self.ui.tabWidget.currentWidget().truss.members))
-        for r, member in enumerate(self.ui.tabWidget.currentWidget().truss.members):
+            len(self.current_tab.truss.members))
+        for r, member in enumerate(self.current_tab.truss.members):
             self.ui.memberInfo.setItem(r, 0, QTableWidgetItem(str(id(member))))
             self.ui.memberInfo.setItem(
                 r, 1, QTableWidgetItem(str(member.joint_a))
@@ -372,8 +374,8 @@ class MainWindow(QMainWindow):
     def loadForces(self) -> None:
         """Populates the forces info table."""
         self.ui.forceInfo.setRowCount(
-            len(self.ui.tabWidget.currentWidget().truss.forces))
-        for r, force in enumerate(self.ui.tabWidget.currentWidget().truss.forces):
+            len(self.current_tab.truss.forces))
+        for r, force in enumerate(self.current_tab.truss.forces):
             self.ui.forceInfo.setItem(r, 0, QTableWidgetItem(str(id(force))))
             self.ui.forceInfo.setItem(r, 1, QTableWidgetItem(str(force.joint)))
             self.ui.forceInfo.setItem(
@@ -396,8 +398,8 @@ class MainWindow(QMainWindow):
 
     def itemIsSelected(self, truss_item) -> bool:
         """Returns wether a truss item is selected on the scene."""
-        if self.ui.tabWidget.currentWidget().connections[id(truss_item)] is not None:
-            return self.ui.tabWidget.currentWidget().connections[id(truss_item)].isSelected()
+        if self.current_tab.connections[id(truss_item)] is not None:
+            return self.current_tab.connections[id(truss_item)].isSelected()
         return False
 
     def deleteDialog(self, dialog: QDialog):

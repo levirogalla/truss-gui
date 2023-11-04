@@ -5,36 +5,7 @@ from pytruss import Support, Joint, Mesh, Force, Member
 
 # from .trusswidget2 import JointItem, TrussWidget
 from ..manageitems.manageitems import JointConnections
-from .editCoordinates_ui import Ui_EditCoordinatesDialog
-
-
-class EditCoordinates(QDialog):
-    """Class for edit joint coordinates dialog."""
-
-    def __init__(self, parent, joint: Joint) -> None:
-        super().__init__(parent)
-
-        self.ui = Ui_EditCoordinatesDialog()
-        self.ui.setupUi(self)
-        self.x_coord: float = None
-        self.y_coord: float = None
-
-        self.ui.doneButton.pressed.connect(self.handleDone)
-        self.ui.cancelButton.pressed.connect(self.close)
-
-        self.ui.xCoordinate.setText(str(joint.x_coordinate.item()))
-        self.ui.yCoordinate.setText(str(joint.y_coordinate.item()))
-
-    def handleDone(self):
-        self.x_coord = float(self.ui.xCoordinate.text())
-        self.y_coord = float(self.ui.yCoordinate.text())
-        self.close()
-
-    @staticmethod
-    def getCoordinates(parent, joint: Joint) -> tuple[float, float]:
-        dialog = EditCoordinates(parent, joint)
-        dialog.exec()
-        return (dialog.x_coord, dialog.y_coord)
+from .editcoordinates import EditCoordinates
 
 
 class JointMenu(QMenu):
@@ -75,6 +46,8 @@ class JointMenu(QMenu):
         self.delete_joint_action.triggered.connect(self.delete_joint)
         self.edit_coordinate_action.triggered.connect(self.edit_coordinates)
 
+        self.dialogs = set()
+
     def update_track_grad(self, track_grad):
         self.joint_item.joint.set_track_grad(track_grad)
         self.joint_item.updateSceneLocation()
@@ -82,17 +55,27 @@ class JointMenu(QMenu):
     def show_supports(self):
         dialog = JointConnections(self.parent(), self.joint_item, Support)
         dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
     def show_forces(self):
         dialog = JointConnections(self.parent(), self.joint_item, Force)
         dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
     def show_members(self):
         dialog = JointConnections(self.parent(), self.joint_item, Member)
         dialog.open()
+        self.dialogs.add(dialog)
+        dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
     def delete_joint(self):
         self.parent().deleteJoint(self.joint_item.joint)
+
+    def deleteDialog(self, dialog: QDialog) -> None:
+        dialog.deleteLater()
+        self.dialogs.remove(dialog)
 
     def edit_coordinates(self):
         x_coord, y_coord = EditCoordinates.getCoordinates(

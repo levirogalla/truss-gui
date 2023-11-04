@@ -32,5 +32,5 @@ class EditCoordinates(QDialog):
     @staticmethod
     def getCoordinates(parent, joint: Joint) -> tuple[float, float]:
         dialog = EditCoordinates(parent, joint)
-        dialog.exec()
+        dialog.open()
         return (dialog.x_coord, dialog.y_coord)

@@ -130,6 +130,7 @@ class JointItem(TrussItem):
             self.setCursor(Qt.CursorShape.OpenHandCursor)
             self.setSelected(False)
             self.scene().update()
+            self.scene().views()[0].interacted.emit()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
         if event.button() == Qt.MouseButton.LeftButton:
@@ -140,6 +141,7 @@ class JointItem(TrussItem):
             else:
                 self.setSelected(not self.isSelected())
             self.scene().update()
+            self.scene().views()[0].interacted.emit()
 
         if event.button() == Qt.MouseButton.RightButton:
             menu = JointMenu(self.scene().views()[0], self)
@@ -167,12 +169,14 @@ class JointItem(TrussItem):
             self.updateCartesianLocation()
             # to redraw the members
             self.scene().update()
+            self.scene().views()[0].interacted.emit()
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
         if self.__dragging:
             self.clearModes()
             self.setCursor(Qt.CursorShape.ArrowCursor)
             self.logChange(f"Item moved too {self.joint}")
+            self.scene().views()[0].interacted.emit()
 
         self.update()
         self.scene().update()
@@ -601,7 +605,7 @@ class TrussWidget(QGraphicsView):
         self.edits = []
         self.scale(10, 10)
         self.updateOrigin()
-        self.loadTrussWidgetFromMesh()
+        self.loadTrussWidgetFromMesh(load_from_file=True)
 
     def updateOrigin(self, draw_new=False) -> None:
         """Update the size of the origin relative to zoom."""
@@ -638,8 +642,8 @@ class TrussWidget(QGraphicsView):
         save_object.save(self.file, optional_suffix)
         self.edits.clear()
 
-    def resetScene(self) -> None:
-        """Clears all truss items of scene."""
+    def __clearScene(self) -> None:
+        """Clears all truss items of scene. Everything must be redrawn after this."""
         self.scene().clear()
         self.connections.clear()
         self.preview_joint = PreviewJointItem(
@@ -652,7 +656,7 @@ class TrussWidget(QGraphicsView):
         """Clears all current truss items and redraws them either from a file or from memory."""
 
         # delete all existing items on scene
-        self.resetScene()
+        self.__clearScene()
 
         if load_from_file and self.file is not None:
             saved_truss = SavedTruss.load(self.file)
@@ -703,6 +707,7 @@ class TrussWidget(QGraphicsView):
             self.scene().addItem(self.connections[id(force)])
 
         self.scene().update()
+        self.interacted.emit()
 
     def event(self, event: QEvent | None) -> bool:
         if event.type() == QEvent.Type.Gesture:
@@ -723,12 +728,14 @@ class TrussWidget(QGraphicsView):
         """Show the preview joint. This is the first function to be called when attempting to add a joint."""
         self.showing_preview_joint = True
         self.preview_joint.show()
+        self.interacted.emit()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if self.showing_preview_joint:
             self.preview_joint.setPos(self.mapToScene(event.pos()))
             self.preview_joint.updateCartesianLocation()
             self.scene().update()
+            self.interacted.emit()
         return super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
@@ -738,8 +745,8 @@ class TrussWidget(QGraphicsView):
             self.preview_joint.hide()
             self.addJoint(self.preview_joint.joint)
             return
-
-        return super().mousePressEvent(event)
+        super().mousePressEvent(event)
+        self.interacted.emit()
 
     def addJoint(self, joint: Joint) -> None:
         """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
@@ -759,6 +766,7 @@ class TrussWidget(QGraphicsView):
         self.connections[id(new_joint)] = item
         self.scene().addItem(item)
         self.joint_added.emit()
+        self.interacted.emit()
         self.edits.append("Joint added")
 
     def deleteJoint(self, joint: Joint) -> None:
@@ -766,22 +774,23 @@ class TrussWidget(QGraphicsView):
 
         for mem in joint.members:
             mem_item: MemberItem = self.connections[id(mem)]
-            self.scene().removeItem(mem_item)
             self.connections.pop(id(mem))
+            self.scene().removeItem(mem_item)
 
         for force in joint.forces:
             force_item: ForceItem = self.connections[id(force)]
-            self.scene().removeItem(force_item)
             self.connections.pop(id((force)))
+            self.scene().removeItem(force_item)
 
         if joint.support is not None:
             sup_item: SupportItem = self.connections[id((joint.support))]
-            self.scene().removeItem(sup_item)
             self.connections.pop(id(joint.support))
+            self.scene().removeItem(sup_item)
 
+        self.connections.pop(id(joint))
         self.truss.delete_joint(joint)
         self.scene().removeItem(joint_item)
-        self.connections.pop(id(joint))
+        self.interacted.emit()
 
     def addMember(self) -> None:
         """Adds a member for every combination of the selected joints."""
@@ -803,13 +812,15 @@ class TrussWidget(QGraphicsView):
             visted.add(j1.joint)
         self.scene().clearSelection()
         self.member_added.emit()
+        self.interacted.emit()
         self.edits.append("Member added")
 
     def deleteMember(self, member: Member):
-        self.truss.delete_member(member)
         member_item: MemberItem = self.connections[id(member)]
         self.scene().removeItem(member_item)
+        self.truss.delete_member(member)
         self.connections.pop(id(member))
+        self.interacted.emit()
 
     def destroyForm(self, form: QWidget) -> None:
         """Destroys a form."""
@@ -817,6 +828,8 @@ class TrussWidget(QGraphicsView):
         for joint_item in self.findChildren(JointItem):
             joint_item: JointItem
             joint_item.setSelected(False)
+
+        self.interacted.emit()
 
     def addSupport(self, joint, support_type: str) -> None:
         """Callback function to handle selection of joint type."""
@@ -832,6 +845,7 @@ class TrussWidget(QGraphicsView):
             self.scene().addItem(supWidg)
             self.support_added.emit()
             self.edits.append(f"{support} added")
+            self.interacted.emit()
 
         if support_type == "Fixed Pin":
             support = Support(joint, "p")
@@ -850,10 +864,11 @@ class TrussWidget(QGraphicsView):
                 f"Support type {support_type} not recognised"))
 
     def deleteSupport(self, support: Force):
-        self.truss.delete_support(support)
         support_item: SupportItem = self.connections[id(support)]
-        self.scene().removeItem(support_item)
         self.connections.pop(id(support))
+        self.truss.delete_support(support)
+        self.scene().removeItem(support_item)
+        self.interacted.emit()
 
     def supportForm(self) -> None:
         """Handles the add support form."""
@@ -887,12 +902,14 @@ class TrussWidget(QGraphicsView):
         self.scene().addItem(force_item)
         self.force_added.emit()
         self.edits.append(f"{force} added")
+        self.interacted.emit()
 
     def deleteForce(self, force: Force):
-        self.truss.delete_force(force)
         force_item: ForceItem = self.connections[id(force)]
-        self.scene().removeItem(force_item)
         self.connections.pop(id(force))
+        self.truss.delete_force(force)
+        self.scene().removeItem(force_item)
+        self.interacted.emit()
 
     def forceForm(self) -> None:
         """Handle the force form."""
@@ -911,15 +928,13 @@ class TrussWidget(QGraphicsView):
                 self.truss.joints, None)
             self.addForce(force)
 
-    def paintEvent(self, event: QPaintEvent | None) -> None:
-        self.interacted.emit()
-        return super().paintEvent(event)
-
     def resetViewSettings(self) -> None:
         """Resets the view settings."""
         self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
+        self.interacted.emit()
 
     def resetOptimizationSettings(self) -> None:
         """Resets the optimization settings."""
         self.truss_optimization_settings = copy.copy(
             DEFAULT_OPTIMIZATION_SETTINGS)
+        self.interacted.emit()
