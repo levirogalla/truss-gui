@@ -51,21 +51,25 @@ class SavedTruss:
             pickle.dump(self, f)
 
     @staticmethod
-    def load(file: str) -> "SavedTruss":
+    def load(file: str, safe_load=False) -> "SavedTruss":
         """Loads the truss and settings."""
         with open(file, "rb") as f:
-            saved_truss: SavedTruss = pickle.load(f)
+            saved_truss: Mesh | SavedTruss = pickle.load(f)
 
-        loaded_truss = SavedTruss(saved_truss.truss)
-        print(loaded_truss.__dict__)
+        if isinstance(saved_truss, Mesh):
+            loaded_truss = SavedTruss(saved_truss)
+        elif safe_load:
+            loaded_truss = SavedTruss(saved_truss.truss)
         # incase savedtruss object is old and doesnt have newer features
-        if hasattr(saved_truss, "optimization_settings"):
-            # loop thru incase new settings since the truss was saved
-            for key, val in saved_truss.optimization_settings.items():
-                loaded_truss.optimization_settings[key] = val
-        if hasattr(saved_truss, "view_preferences"):
-            # loop thru incase new settings since the truss was saved
-            for key, val in saved_truss.view_preferences.items():
-                loaded_truss.view_preferences[key] = val
+        else:
+            loaded_truss = SavedTruss(saved_truss.truss)
+            if hasattr(saved_truss, "optimization_settings"):
+                # loop thru incase new settings since the truss was saved
+                for key, val in saved_truss.optimization_settings.items():
+                    loaded_truss.optimization_settings[key] = val
+            if hasattr(saved_truss, "view_preferences"):
+                # loop thru incase new settings since the truss was saved
+                for key, val in saved_truss.view_preferences.items():
+                    loaded_truss.view_preferences[key] = val
 
         return loaded_truss
