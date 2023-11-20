@@ -219,9 +219,7 @@ class MemberItem(TrussItem):
 
         path = self.shape()
 
-        pen = QPen(color)
-        painter.setPen(pen)
-        painter.drawPath(path)
+        painter.setPen(color)
         painter.fillPath(path, color)
 
         if draw_bound_box:
@@ -229,8 +227,8 @@ class MemberItem(TrussItem):
             painter.drawRect(rect)
 
     def boundingRect(self) -> QRectF:
-        j1 = self.getConnection(id(self.member.joint_a))
-        j2 = self.getConnection(id(self.member.joint_b))
+        j1: JointItem = self.getConnection(id(self.member.joint_a))
+        j2: JointItem = self.getConnection(id(self.member.joint_b))
         p1: QPointF = j1.scenePos()
         p2: QPointF = j2.scenePos()
 
@@ -281,7 +279,7 @@ class MemberItem(TrussItem):
             perp_slope = 10e10
 
         # normalize and apply thickness
-        norm = ((perp_slope**2 + 1**2)**0.5)
+        norm = ((dx**2 + dy**2)**0.5)
         perp_vector = (QPointF(perp_slope, 1) / norm) * self.thickness
 
         p1a = p1 + perp_vector
@@ -289,10 +287,10 @@ class MemberItem(TrussItem):
         p2a = p2 + perp_vector
         p2b = p2 - perp_vector
 
-        path.moveTo(p1a.x(), p1a.y())
-        path.lineTo(p1b.x(), p1b.y())
-        path.lineTo(p2b.x(), p2b.y())
-        path.lineTo(p2a.x(), p2a.y())
+        path.moveTo(p1a)
+        path.lineTo(p1b)
+        path.lineTo(p2b)
+        path.lineTo(p2a)
         path.closeSubpath()
 
         return path
