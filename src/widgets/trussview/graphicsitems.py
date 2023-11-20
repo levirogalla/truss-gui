@@ -279,7 +279,7 @@ class MemberItem(TrussItem):
             perp_slope = 10e10
 
         # normalize and apply thickness
-        norm = ((dx**2 + dy**2)**0.5)
+        norm = ((perp_slope**2 + 1**2)**0.5)
         perp_vector = (QPointF(perp_slope, 1) / norm) * self.thickness
 
         p1a = p1 + perp_vector
