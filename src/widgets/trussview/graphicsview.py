@@ -290,17 +290,20 @@ class TrussWidget(QGraphicsView):
         """Callback function to handle selection of joint type."""
         def addSupportDetails(support: Support):
             """Callback function to add the support to the joint and truss."""
-            self.truss.add_support(support)
-            supWidg = SupportItem(
-                self.truss_view_preferences["support_size"],
-                support,
-                self.truss_view_preferences["support_color"]
-            )
-            self.connections[id(support)] = supWidg
-            self.scene().addItem(supWidg)
-            self.support_added.emit()
-            self.edits.append(f"{support} added")
-            self.interacted.emit()
+            try:
+                self.truss.add_support(support)
+                supWidg = SupportItem(
+                    self.truss_view_preferences["support_size"],
+                    support,
+                    self.truss_view_preferences["support_color"]
+                )
+                self.connections[id(support)] = supWidg
+                self.scene().addItem(supWidg)
+                self.support_added.emit()
+                self.edits.append(f"{support} added")
+                self.interacted.emit()
+            except ValueError:
+                print("Joint has a support already.")
 
         if support_type == "Fixed Pin":
             support = Support(joint, "p")
