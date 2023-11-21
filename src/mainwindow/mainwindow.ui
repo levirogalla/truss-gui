@@ -193,7 +193,7 @@
        <property name="tabBarAutoHide">
         <bool>false</bool>
        </property>
-       <widget class="TrussWidget" name="truss1">
+       <widget class="StartPage" name="start">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
           <horstretch>0</horstretch>
@@ -202,17 +202,6 @@
         </property>
         <attribute name="title">
          <string>Start</string>
-        </attribute>
-       </widget>
-       <widget class="TrussWidget" name="truss">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <attribute name="title">
-         <string>New Truss</string>
         </attribute>
        </widget>
       </widget>
@@ -364,7 +353,7 @@
      <x>0</x>
      <y>0</y>
      <width>983</width>
-     <height>24</height>
+     <height>37</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -550,9 +539,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>TrussWidget</class>
+   <class>StartPage</class>
    <extends>QWidget</extends>
-   <header>trusseditor/trusswidget2.h</header>
+   <header>widgets/contextmenus/startmenu/startpage.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

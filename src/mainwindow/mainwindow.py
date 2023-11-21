@@ -9,6 +9,7 @@ from pytruss import Force, Member, Joint, Support
 from .mainwindow_ui import Ui_MainWindow
 from widgets.trussview.graphicsitems import JointItem, MemberItem, ForceItem, JointItem
 from widgets.trussview.graphicsview import TrussWidget
+from widgets.contextmenus.startmenu.startpage import StartPage
 from dialogs.checksave.checksave import CheckSaveDialog
 from dialogs.optimize.optimize import OptimizeDialog
 from dialogs.trusspreferences.trussprefences import TrussPreferences
@@ -22,6 +23,9 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        # give start page reference to main window
+        self.ui.start.set_main_window(self)
 
         # flags
         self.ui.jointInfo.setSelectionMode(
@@ -126,12 +130,12 @@ class MainWindow(QMainWindow):
         if openFileDialog.exec():
             files = openFileDialog.selectedFiles()
 
-        for file in files:
-            truss_widget = TrussWidget(file)
-            self.handleCreateNewTab(truss_widget)
-            self.ui.tabWidget.setCurrentWidget(truss_widget)
+            for file in files:
+                truss_widget = TrussWidget(file)
+                self.handleCreateNewTab(truss_widget)
+                self.ui.tabWidget.setCurrentWidget(truss_widget)
 
-        self.updateInfo()
+            self.updateInfo()
 
     def openTrussInMPL(self) -> None:
         """Opens the truss in Matplotlib."""
@@ -184,7 +188,7 @@ class MainWindow(QMainWindow):
 
         # disconnect old signals
         # checks to make sure signals are connected before attempting to disconnect
-        if last_tab != new_tab:
+        if last_tab != new_tab and not isinstance(last_tab, StartPage):
             last_tab.interacted.disconnect(self.updateInfo)
             last_tab.member_added.disconnect(self.loadMembers)
             last_tab.joint_added.disconnect(self.loadJoints)
@@ -194,6 +198,11 @@ class MainWindow(QMainWindow):
             self.ui.addMemberButton.clicked.disconnect(last_tab.addMember)
             self.ui.addSupportButton.clicked.disconnect(last_tab.supportForm)
             self.ui.addForceButton.clicked.disconnect(last_tab.forceForm)
+
+        # don't connect buttons if on start page
+        if isinstance(new_tab, StartPage):
+            self.current_tab = new_tab
+            return
 
         # connect new signals
         new_tab.interacted.connect(self.updateInfo)
