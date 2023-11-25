@@ -45,14 +45,37 @@ class SavedTruss:
         self.optimization_settings = optimization_settings
         self.view_preferences = view_preferences
 
+    @staticmethod
+    def add_to_recent(path):
+        files = SavedTruss.recent()
+        if len(files) > 5:
+            files.pop()
+        if path not in files:
+            files.insert(0, path)
+
+        with open("src/utils/recent.txt", "w") as f:
+            f.writelines("\n".join(files))
+
     def save(self, file: str, optional_suffix="", optional_prefix="") -> None:
         """Saves the truss and settings."""
-        with open(optional_prefix + file + optional_suffix + ("" if file.endswith(".trss") else ".trss"), "wb") as f:
+        path = optional_prefix + file + optional_suffix + \
+            ("" if file.endswith(".trss") else ".trss")
+        with open(path, "wb") as f:
             pickle.dump(self, f)
+
+        self.add_to_recent(path)
+
+    @staticmethod
+    def recent() -> list[str]:
+        with open("src/utils/recent.txt", "r") as f:
+            files = f.read().split("\n")
+        return files
 
     @staticmethod
     def load(file: str, safe_load=False) -> "SavedTruss":
         """Loads the truss and settings."""
+        SavedTruss.add_to_recent(file)
+
         with open(file, "rb") as f:
             saved_truss: Mesh | SavedTruss = pickle.load(f)
 

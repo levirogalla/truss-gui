@@ -1,6 +1,7 @@
 """Gui for pytruss."""
 
 import sys
+import functools
 
 from PyQt6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
 from PyQt6.QtCore import Qt
@@ -14,6 +15,7 @@ from dialogs.checksave.checksave import CheckSaveDialog
 from dialogs.optimize.optimize import OptimizeDialog
 from dialogs.trusspreferences.trussprefences import TrussPreferences
 from dialogs.manageitems.manageitems import TrussItems
+from utils.saveopen import SavedTruss
 
 
 class MainWindow(QMainWindow):
@@ -32,19 +34,80 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionMode.MultiSelection
         )
 
+        # connect actions
+        self.connectActions()
+
+        # info selection stuff
+        self.connectInfoSignals()
+
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+
+        # tab stuff
+        self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
+        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+        self.handleTabChange()
+        self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
+
+        self.dialogs = set()
+
+        # for the open recent action
+        self.showRecentFiles()
+
+    def showRecentFiles(self):
+        recent_files = SavedTruss.recent()
+        for file in recent_files:
+            self.ui.menuOpen_Recent.addAction(
+                file, functools.partial(self.handleCreateNewTab, truss=TrussWidget(file)))
+
+    def disconnectActions(self) -> None:
+        try:
+            # file actions
+            self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
+            self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
+            self.ui.actionSave_As.triggered.disconnect(self.saveAs)
+            self.ui.actionSave.triggered.disconnect(self.handleSave)
+
+            # edit actions
+            self.ui.actionForce.triggered.disconnect(self.openForcesTable)
+            self.ui.actionMember.triggered.disconnect(self.openMembersTable)
+            self.ui.actionSupport.triggered.disconnect(self.openSupportsTable)
+            self.ui.actionJoint.triggered.disconnect(self.openJointsTable)
+
+            # solve actions
+            self.ui.actionSolve_Members.triggered.disconnect(
+                self.handleSolveMembers)
+            self.ui.actionSolve_Reactions.triggered.disconnect(
+                self.handleSolveReactions)
+            self.ui.actionOpen_Optimizer.triggered.disconnect(
+                self.handleOptimize
+            )
+
+            # view actions
+            self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
+            self.ui.actionTruss_Preferences.triggered.disconnect(
+                self.openTrussPreferences)
+        except TypeError as e:
+            print("Some or all actions aren't connected.", e)
+
+    def connectActions(self) -> None:
         # file actions
-        self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
-        self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
-        self.ui.actionSave_As.triggered.connect(self.saveAs)
-        self.ui.actionSave.triggered.connect(self.handleSave)
+        self.connectFileActions()
 
         # edit actions
-        self.ui.actionForce.triggered.connect(self.openForcesTable)
-        self.ui.actionMember.triggered.connect(self.openMembersTable)
-        self.ui.actionSupport.triggered.connect(self.openSupportsTable)
-        self.ui.actionJoint.triggered.connect(self.openJointsTable)
+        self.connectEditActions()
 
         # solve actions
+        self.connectSolveActions()
+
+        # view actions
+        self.connectViewActions()
+
+    def connectViewActions(self):
+        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
+        self.ui.actionTruss_Preferences.triggered.connect(
+            self.openTrussPreferences)
+
+    def connectSolveActions(self):
         self.ui.actionSolve_Members.triggered.connect(
             self.handleSolveMembers)
         self.ui.actionSolve_Reactions.triggered.connect(
@@ -53,23 +116,17 @@ class MainWindow(QMainWindow):
             self.handleOptimize
         )
 
-        # view actions
-        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
-        self.ui.actionTruss_Preferences.triggered.connect(
-            self.openTrussPreferences)
+    def connectEditActions(self):
+        self.ui.actionForce.triggered.connect(self.openForcesTable)
+        self.ui.actionMember.triggered.connect(self.openMembersTable)
+        self.ui.actionSupport.triggered.connect(self.openSupportsTable)
+        self.ui.actionJoint.triggered.connect(self.openJointsTable)
 
-        # info selection stuff
-        self.connectInfoSignals()
-
-        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
-
-        # tab stuff
-        self.ui.tabWidget.currentChanged.connect(self.setUpButtonSignals)
-        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
-        self.setUpButtonSignals()
-        self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
-
-        self.dialogs = set()
+    def connectFileActions(self):
+        self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
+        self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
+        self.ui.actionSave_As.triggered.connect(self.saveAs)
+        self.ui.actionSave.triggered.connect(self.handleSave)
 
     def openTrussPreferences(self) -> None:
         """Opens the view preferences dialog."""
@@ -98,12 +155,18 @@ class MainWindow(QMainWindow):
     def saveAs(self, optional_suffix: str = "") -> None:
         """Handles the save as request and open save dialog always."""
         current_truss: TrussWidget = self.current_tab
-        current_truss.file = None
-        self.handleSave()
+        # file actions are connected on start page so add check
+        if not isinstance(current_truss, StartPage):
+            current_truss.file = None
+            self.handleSave()
 
     def handleSave(self, optional_suffix: str = "") -> None:
         """Handles save request and only open save dialog if the truss has never been saved before."""
         current_truss: TrussWidget = self.current_tab
+
+        # file actions are connected on start page so add check
+        if isinstance(current_truss, StartPage):
+            return
 
         if current_truss.file is None:
             saveAsDialog = QFileDialog(self)
@@ -181,10 +244,11 @@ class MainWindow(QMainWindow):
         self.ui.supportInfo.itemSelectionChanged.disconnect(
             self.updateTrussSelections)
 
-    def setUpButtonSignals(self) -> None:
+    def handleTabChange(self) -> None:
         """Connects button signals to handler functions."""
         last_tab = self.current_tab
         new_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+        self.disconnectActions()
 
         # disconnect old signals
         # checks to make sure signals are connected before attempting to disconnect
@@ -201,10 +265,12 @@ class MainWindow(QMainWindow):
 
         # don't connect buttons if on start page
         if isinstance(new_tab, StartPage):
+            self.connectFileActions()
             self.current_tab = new_tab
             return
 
         # connect new signals
+        self.connectActions()
         new_tab.interacted.connect(self.updateInfo)
         new_tab.member_added.connect(self.loadMembers)
         new_tab.joint_added.connect(self.loadJoints)
