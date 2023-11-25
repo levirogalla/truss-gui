@@ -41,6 +41,8 @@ class MainWindow(QMainWindow):
         self.connectInfoSignals()
 
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+        self.ui.actionStart.triggered.connect(
+            lambda: self.ui.tabWidget.addTab(StartPage(), "Start"))
 
         # tab stuff
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
@@ -55,6 +57,7 @@ class MainWindow(QMainWindow):
 
     def showRecentFiles(self):
         recent_files = SavedTruss.recent()
+
         for file in recent_files:
             self.ui.menuOpen_Recent.addAction(
                 file, functools.partial(self.handleCreateNewTab, truss=TrussWidget(file)))
@@ -213,7 +216,11 @@ class MainWindow(QMainWindow):
 
     def handleTabClose(self, index: int) -> None:
         """Handles close tab request. Opens dialog to save recent changes if not saved."""
-        truss_widget: TrussWidget = self.ui.tabWidget.widget(index)
+        truss_widget: TrussWidget | StartPage = self.ui.tabWidget.widget(index)
+
+        if isinstance(truss_widget, StartPage):
+            self.ui.tabWidget.removeTab(index)
+            return
 
         if len(truss_widget.edits) != 0:
             form = CheckSaveDialog(

@@ -53,7 +53,7 @@ class SavedTruss:
         if path not in files:
             files.insert(0, path)
 
-        with open("src/utils/recent.txt", "w") as f:
+        with open("src/utils/recent.txt", "w+") as f:
             f.writelines("\n".join(files))
 
     def save(self, file: str, optional_suffix="", optional_prefix="") -> None:
@@ -67,9 +67,15 @@ class SavedTruss:
 
     @staticmethod
     def recent() -> list[str]:
-        with open("src/utils/recent.txt", "r") as f:
-            files = f.read().split("\n")
-        return files
+        try:
+            with open("src/utils/recent.txt", "r") as f:
+                files = f.read().split("\n")
+                if files[-1] == "":
+                    files.pop()
+            return files
+        except FileNotFoundError:
+            with open("src/utils/recent.txt", "w+"):
+                return []
 
     @staticmethod
     def load(file: str, safe_load=False) -> "SavedTruss":
