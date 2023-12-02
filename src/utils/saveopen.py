@@ -36,6 +36,10 @@ DEFAULT_VIEW_PREFERENCES = {
     "joint_radius": 5,
 }
 
+DEFAULT_GENERAL_SETTINGS = {
+    "zoom_sensitivity": 10,
+}
+
 
 class SavedTruss:
     """Handles creating of truss save object that will be pickled. This object should be made before every save event to ensure all new features and settings are acounted for."""
@@ -102,3 +106,20 @@ class SavedTruss:
                     loaded_truss.view_preferences[key] = val
 
         return loaded_truss
+
+    @staticmethod
+    def get_general_settings() -> dict:
+        try:
+            with open("src/utils/generalsettings.pkl", "rb") as f:
+                loaded_settings: dict = pickle.load(f)
+                settings = copy.copy(DEFAULT_GENERAL_SETTINGS)
+                for key, val in loaded_settings.items():
+                    settings[key] = val
+            return settings
+        except EOFError:
+            return copy.copy(DEFAULT_GENERAL_SETTINGS)
+
+    @staticmethod
+    def save_general_settings(setting: dict) -> None:
+        with open("src/utils/generalsettings.pkl", "wb") as f:
+            pickle.dump(setting, f)

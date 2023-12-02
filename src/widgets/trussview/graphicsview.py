@@ -6,12 +6,12 @@ from torch import optim
 
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
 from PyQt6.QtCore import QEvent, QPointF, Qt, pyqtSignal, QRectF, QThread, QLineF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush
+from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush, QResizeEvent
 from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
 
 from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
-from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
+from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES, DEFAULT_GENERAL_SETTINGS
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
 from widgets.trussview.graphicsitems import JointItem, MemberItem, PreviewJointItem, ForceItem, SupportItem
 
@@ -30,6 +30,7 @@ class TrussWidget(QGraphicsView):
         self.truss_optimization_settings = copy.copy(
             DEFAULT_OPTIMIZATION_SETTINGS)
         self.truss_view_preferences = copy.copy(DEFAULT_VIEW_PREFERENCES)
+        self.general_settings = copy.copy(DEFAULT_GENERAL_SETTINGS)
 
         self.truss = Mesh()
         self.file = file
@@ -37,6 +38,7 @@ class TrussWidget(QGraphicsView):
         self.grabGesture(Qt.GestureType.PinchGesture)
         self.setScene(self.truss_scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
+        self.setResizeAnchor(self.ViewportAnchor.AnchorViewCenter)
         self.setTransformationAnchor(self.ViewportAnchor.AnchorUnderMouse)
         self.connections = dict()
         self.preview_joint = PreviewJointItem(
@@ -58,14 +60,25 @@ class TrussWidget(QGraphicsView):
         }
 
         # track changes made
+
         self.edits = []
-        self.updateOrigin()
         self.loadTrussWidgetFromMesh(load_from_file=True)
+
+        # self.centerOn(0, 0)
+
+        # self.ensureVisible(self.scene().itemsBoundingRect(), int(self.scene(
+        # ).itemsBoundingRect().width()*0.1), int(self.scene().itemsBoundingRect().height()*0.1))
+        x_margin = self.scene().itemsBoundingRect().width()*0.1
+        y_margin = self.scene().itemsBoundingRect().width()*0.1
+        self.setSceneRect(
+            self.scene().itemsBoundingRect().adjusted(-x_margin, -y_margin, x_margin, y_margin))
+        self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
+        self.updateOrigin()
 
     def updateOrigin(self, draw_new=False) -> None:
         """Update the size of the origin relative to zoom."""
 
-        view_size = 1/self.transform().m11() * self.sceneRect().width()
+        view_size = 1/self.transform().m11() * 500
 
         if self.width() < self.height():
             pen = QPen(QColor(0, 0, 0), view_size*0.005)
@@ -118,6 +131,7 @@ class TrussWidget(QGraphicsView):
             self.truss = saved_truss.truss
             self.truss_optimization_settings = saved_truss.optimization_settings
             self.truss_view_preferences = saved_truss.view_preferences
+            self.general_settings = SavedTruss.get_general_settings()
 
         # maybe make function to add widget to scene since its used a lot
         for joint in self.truss.joints:
@@ -176,7 +190,7 @@ class TrussWidget(QGraphicsView):
     def pinchTriggered(self, gesture: QPinchGesture) -> None:
         """Scale the view from pinch gesture."""
         scale_factor = gesture.scaleFactor()
-        self.scale(scale_factor, scale_factor)
+        self.resizeViewport(scale_factor)
         self.updateOrigin()
 
     def previewJoint(self) -> None:
@@ -224,13 +238,32 @@ class TrussWidget(QGraphicsView):
             self.__highlighted_rect = self.scene().addRect(rect, pen, brush)
         elif self.paning:
             current_pos_pan = event.pos()
-            translation = self.mapToScene(
-                current_pos_pan) - self.mapToScene(self.__start_pos_pan)
-            print(translation)
-            self.translate(translation.x(), translation.y())
+            translation = self.mapToScene(self.__start_pos_pan) - self.mapToScene(
+                current_pos_pan)
+
+            self.translateViewport(translation.x(), translation.y())
+
+            self.updateOrigin()
             self.__start_pos_pan = current_pos_pan
 
         return super().mouseMoveEvent(event)
+
+    def translateViewport(self, translation_x=0, translation_y=0):
+        self.setSceneRect(
+            self.sceneRect().adjusted(translation_x, translation_y, translation_x, translation_y))
+        self.fitInView(self.sceneRect(),
+                       Qt.AspectRatioMode.KeepAspectRatio)
+
+    def resizeViewport(self, scale: float):
+        diff = (1-scale)*self.general_settings["zoom_sensitivity"]
+        new_rect = self.sceneRect().adjusted(-diff, -diff, diff, diff)
+        self.setSceneRect(new_rect)
+        self.fitInView(self.sceneRect(),
+                       Qt.AspectRatioMode.KeepAspectRatio)
+
+    def resizeEvent(self, event: QResizeEvent):
+        self.fitInView(self.sceneRect(),
+                       Qt.AspectRatioMode.KeepAspectRatio)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
         # if preview joint is showing add a joint at that location and hid preview

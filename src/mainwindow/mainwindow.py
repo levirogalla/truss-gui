@@ -15,6 +15,7 @@ from dialogs.checksave.checksave import CheckSaveDialog
 from dialogs.optimize.optimize import OptimizeDialog
 from dialogs.trusspreferences.trussprefences import TrussPreferences
 from dialogs.manageitems.manageitems import TrussItems
+from dialogs.generalsettings.generalsettings import GeneralSettings
 from utils.saveopen import SavedTruss
 
 
@@ -89,6 +90,9 @@ class MainWindow(QMainWindow):
             self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
             self.ui.actionTruss_Preferences.triggered.disconnect(
                 self.openTrussPreferences)
+            self.ui.actionGeneral_Settings.triggered.disconnect(
+                self.openGeneralSettings
+            )
         except TypeError as e:
             print("Some or all actions aren't connected.", e)
 
@@ -109,6 +113,9 @@ class MainWindow(QMainWindow):
         self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
         self.ui.actionTruss_Preferences.triggered.connect(
             self.openTrussPreferences)
+        self.ui.actionGeneral_Settings.triggered.connect(
+            self.openGeneralSettings
+        )
 
     def connectSolveActions(self):
         self.ui.actionSolve_Members.triggered.connect(
@@ -134,6 +141,10 @@ class MainWindow(QMainWindow):
     def openTrussPreferences(self) -> None:
         """Opens the view preferences dialog."""
         dialog = TrussPreferences(self.current_tab)
+        dialog.exec()
+
+    def openGeneralSettings(self) -> None:
+        dialog = GeneralSettings(self.current_tab)
         dialog.exec()
 
     def handleOptimize(self) -> None:
