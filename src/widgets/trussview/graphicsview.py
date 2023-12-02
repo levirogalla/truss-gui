@@ -38,7 +38,6 @@ class TrussWidget(QGraphicsView):
         self.setScene(self.truss_scene)
         self.setRenderHint(QPainter.RenderHint.Antialiasing)
         self.setTransformationAnchor(self.ViewportAnchor.AnchorUnderMouse)
-        self.setMouseTracking(False)
         self.connections = dict()
         self.preview_joint = PreviewJointItem(
             self.truss_view_preferences["joint_radius"])
@@ -47,6 +46,8 @@ class TrussWidget(QGraphicsView):
         self.forms: set[QWidget] = set()
         self.setMouseTracking(True)
         self.showing_preview_joint = False
+        self.paning = False
+        self.showing_highlighted_rectangle = False
 
         # origin lines
         self.origin = {
@@ -58,7 +59,6 @@ class TrussWidget(QGraphicsView):
 
         # track changes made
         self.edits = []
-        self.scale(10, 10)
         self.updateOrigin()
         self.loadTrussWidgetFromMesh(load_from_file=True)
 
@@ -191,6 +191,45 @@ class TrussWidget(QGraphicsView):
             self.preview_joint.updateCartesianLocation()
             self.scene().update()
             self.interacted.emit()
+        elif self.showing_highlighted_rectangle:
+            pos = event.pos()
+            scene_pos = self.mapToScene(pos)
+            rect = QRectF(
+                scene_pos, self.__start_pos_highlight)
+            if rect.width() < 0:
+                self.__selection_mode = "exclusive"
+                brush = QBrush(QColor(0, 0, 255, 50))
+            else:
+                self.__selection_mode = "inclusive"
+                brush = QBrush(QColor(100, 0, 255, 50))
+
+            rect = rect.normalized()
+
+            if self.__selection_mode == "exclusive":
+                self.scene().clearSelection()
+                for item in self.scene().items(rect):
+                    item.setSelected(True)
+            elif self.__selection_mode == "inclusive":
+                self.scene().clearSelection()
+                for item in self.scene().items(rect, Qt.ItemSelectionMode.ContainsItemShape):
+                    item.setSelected(True)
+
+            if self.__highlighted_rect is not None:
+                self.scene().removeItem(self.__highlighted_rect)
+
+            # change thickness of selection border based on scale
+            thickness = 0.5/self.transform().m11()
+            pen = QPen(QColor(255, 255, 255), thickness)
+
+            self.__highlighted_rect = self.scene().addRect(rect, pen, brush)
+        elif self.paning:
+            current_pos_pan = event.pos()
+            translation = self.mapToScene(
+                current_pos_pan) - self.mapToScene(self.__start_pos_pan)
+            print(translation)
+            self.translate(translation.x(), translation.y())
+            self.__start_pos_pan = current_pos_pan
+
         return super().mouseMoveEvent(event)
 
     def mousePressEvent(self, event: QMouseEvent | None) -> None:
@@ -200,8 +239,45 @@ class TrussWidget(QGraphicsView):
             self.preview_joint.hide()
             self.addJoint(self.preview_joint.joint)
             return
+        elif self.itemAt(event.pos()) is not None:
+            # the user clicking on a scene item so do nothing
+            pass
+        elif event.button() == Qt.MouseButton.MiddleButton:
+            self.paning = True
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+            # will be used later
+            self.__start_pos_pan = event.pos()
+
+        elif event.button() == Qt.MouseButton.LeftButton:
+            self.showing_highlighted_rectangle = True
+            pos = event.pos()
+
+            # will be used later
+            self.__selection_mode = None
+            self.__highlighted_rect = None
+            self.__start_pos_highlight = self.mapToScene(pos)
+
         super().mousePressEvent(event)
         self.interacted.emit()
+
+    def mouseReleaseEvent(self, event: QMouseEvent | None):
+        if self.showing_preview_joint:
+            pass
+        elif self.showing_highlighted_rectangle:
+            # case where highlighting
+            self.showing_highlighted_rectangle = False
+            del self.__start_pos_highlight
+            if self.__highlighted_rect is not None:
+                self.scene().removeItem(self.__highlighted_rect)
+            del self.__highlighted_rect
+        elif self.paning:
+            # case where paning
+            self.paning = False
+            self.setCursor(Qt.CursorShape.ArrowCursor)
+            del self.__start_pos_pan
+
+        return super().mouseReleaseEvent(event)
 
     def addJoint(self, joint: Joint) -> None:
         """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
