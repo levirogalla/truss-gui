@@ -113,11 +113,11 @@ class MainWindow(QMainWindow):
 
     def handleZoomIn(self) -> None:
         self.current_tab.resizeViewport(
-            self.current_tab.general_settings["zoom_step"])
+            -self.current_tab.general_settings["zoom_step"])
 
     def handleZoomOut(self) -> None:
         self.current_tab.resizeViewport(
-            -self.current_tab.general_settings["zoom_step"]/4)
+            self.current_tab.general_settings["zoom_step"])
 
     def connectSolveActions(self):
         self.ui.actionSolve_Members.triggered.connect(

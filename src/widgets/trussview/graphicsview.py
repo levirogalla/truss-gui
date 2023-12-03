@@ -255,8 +255,8 @@ class TrussWidget(QGraphicsView):
                        Qt.AspectRatioMode.KeepAspectRatio)
 
     def resizeViewport(self, diff: float):
-        # print("here")
         new_rect = self.sceneRect().adjusted(-diff, -diff, diff, diff)
+        print(new_rect.toRect())
         if new_rect.width() > 0 and new_rect.height() > 0:
             self.setSceneRect(new_rect)
             self.fitInView(self.sceneRect(),

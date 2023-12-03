@@ -38,7 +38,7 @@ DEFAULT_VIEW_PREFERENCES = {
 
 DEFAULT_GENERAL_SETTINGS = {
     "zoom_sensitivity": 10,
-    "zoom_step": 20,
+    "zoom_step": 5,
 }
 
 
