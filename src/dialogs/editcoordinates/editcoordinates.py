@@ -19,11 +19,15 @@ class EditCoordinatesDialog(QDialog):
         self.y_coord: float = None
 
         self.ui.doneButton.pressed.connect(self.handleDone)
-        self.ui.cancelButton.pressed.connect(self.close)
+        self.ui.cancelButton.pressed.connect(self.cancel)
 
         self.ui.xCoordinate.setText(str(joint.x_coordinate.item()))
         self.ui.yCoordinate.setText(str(joint.y_coordinate.item()))
         self.ui.trackGrad.setCurrentText(str(joint.track_grad))
+
+    def cancel(self):
+        self.close()
+        return None, None, None
 
     def handleDone(self):
         self.x_coord = float(self.ui.xCoordinate.text())

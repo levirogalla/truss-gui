@@ -35,8 +35,14 @@ class MainWindow(QMainWindow):
             QAbstractItemView.SelectionMode.MultiSelection
         )
 
-        # connect actions
-        self.connectActions()
+        # tab stuff
+        self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
+        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+        self.handleTabChange()
+        self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
+
+        # # connect actions
+        # self.handleTabChange()
 
         # info selection stuff
         self.connectInfoSignals()
@@ -44,12 +50,6 @@ class MainWindow(QMainWindow):
         self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
         self.ui.actionStart.triggered.connect(
             lambda: self.ui.tabWidget.addTab(StartPage(), "Start"))
-
-        # tab stuff
-        self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
-        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
-        self.handleTabChange()
-        self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
 
         self.dialogs = set()
 
@@ -66,33 +66,16 @@ class MainWindow(QMainWindow):
     def disconnectActions(self) -> None:
         try:
             # file actions
-            self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
-            self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
-            self.ui.actionSave_As.triggered.disconnect(self.saveAs)
-            self.ui.actionSave.triggered.disconnect(self.handleSave)
+            self.disconnectFileActions()
 
             # edit actions
-            self.ui.actionForce.triggered.disconnect(self.openForcesTable)
-            self.ui.actionMember.triggered.disconnect(self.openMembersTable)
-            self.ui.actionSupport.triggered.disconnect(self.openSupportsTable)
-            self.ui.actionJoint.triggered.disconnect(self.openJointsTable)
+            self.disconnectEditActions()
 
             # solve actions
-            self.ui.actionSolve_Members.triggered.disconnect(
-                self.handleSolveMembers)
-            self.ui.actionSolve_Reactions.triggered.disconnect(
-                self.handleSolveReactions)
-            self.ui.actionOpen_Optimizer.triggered.disconnect(
-                self.handleOptimize
-            )
+            self.disconnectSolveActions()
 
             # view actions
-            self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
-            self.ui.actionTruss_Preferences.triggered.disconnect(
-                self.openTrussPreferences)
-            self.ui.actionGeneral_Settings.triggered.disconnect(
-                self.openGeneralSettings
-            )
+            self.disconnectViewActions()
         except TypeError as e:
             print("Some or all actions aren't connected.", e)
 
@@ -117,6 +100,14 @@ class MainWindow(QMainWindow):
             self.openGeneralSettings
         )
 
+    def disconnectViewActions(self):
+        self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
+        self.ui.actionTruss_Preferences.triggered.disconnect(
+            self.openTrussPreferences)
+        self.ui.actionGeneral_Settings.triggered.disconnect(
+            self.openGeneralSettings
+        )
+
     def connectSolveActions(self):
         self.ui.actionSolve_Members.triggered.connect(
             self.handleSolveMembers)
@@ -126,17 +117,57 @@ class MainWindow(QMainWindow):
             self.handleOptimize
         )
 
+    def disconnectSolveActions(self):
+        self.ui.actionSolve_Members.triggered.disconnect(
+            self.handleSolveMembers)
+        self.ui.actionSolve_Reactions.triggered.disconnect(
+            self.handleSolveReactions)
+        self.ui.actionOpen_Optimizer.triggered.disconnect(
+            self.handleOptimize
+        )
+
     def connectEditActions(self):
         self.ui.actionForce.triggered.connect(self.openForcesTable)
         self.ui.actionMember.triggered.connect(self.openMembersTable)
         self.ui.actionSupport.triggered.connect(self.openSupportsTable)
         self.ui.actionJoint.triggered.connect(self.openJointsTable)
 
+        self.ui.actionAddJointDrop.triggered.connect(
+            self.current_tab.previewJoint)
+        self.ui.actionAddJointDialog.triggered.connect(
+            self.current_tab.handleAddJoint)
+        self.ui.actionAddMember.triggered.connect(self.current_tab.addMember)
+        self.ui.actionAddForce.triggered.connect(self.current_tab.forceForm)
+        self.ui.actionAddSupport.triggered.connect(
+            self.current_tab.supportForm)
+
+    def disconnectEditActions(self):
+        self.ui.actionForce.triggered.disconnect(self.openForcesTable)
+        self.ui.actionMember.triggered.disconnect(self.openMembersTable)
+        self.ui.actionSupport.triggered.disconnect(self.openSupportsTable)
+        self.ui.actionJoint.triggered.disconnect(self.openJointsTable)
+
+        self.ui.actionAddJointDrop.triggered.disconnect(
+            self.current_tab.previewJoint)
+        self.ui.actionAddJointDialog.triggered.disconnect(
+            self.current_tab.handleAddJoint)
+        self.ui.actionAddMember.triggered.disconnect(
+            self.current_tab.addMember)
+        self.ui.actionAddForce.triggered.disconnect(self.current_tab.forceForm)
+        self.ui.actionAddSupport.triggered.disconnect(
+            self.current_tab.supportForm)
+
     def connectFileActions(self):
         self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
         self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.connect(self.saveAs)
         self.ui.actionSave.triggered.connect(self.handleSave)
+
+    def disconnectFileActions(self):
+        self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
+        self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
+        self.ui.actionSave_As.triggered.disconnect(self.saveAs)
+        self.ui.actionSave.triggered.disconnect(self.handleSave)
 
     def openTrussPreferences(self) -> None:
         """Opens the view preferences dialog."""
@@ -262,44 +293,62 @@ class MainWindow(QMainWindow):
         self.ui.supportInfo.itemSelectionChanged.disconnect(
             self.updateTrussSelections)
 
+    def connectTrussSignals(self) -> None:
+        self.current_tab.interacted.connect(self.updateInfo)
+        self.current_tab.member_added.connect(self.loadMembers)
+        self.current_tab.joint_added.connect(self.loadJoints)
+        self.current_tab.support_added.connect(self.loadSupports)
+        self.current_tab.force_added.connect(self.loadForces)
+
+    def disconnectTrussSignals(self) -> None:
+        self.current_tab.interacted.disconnect(self.updateInfo)
+        self.current_tab.member_added.disconnect(self.loadMembers)
+        self.current_tab.joint_added.disconnect(self.loadJoints)
+        self.current_tab.support_added.disconnect(self.loadSupports)
+        self.current_tab.force_added.disconnect(self.loadForces)
+
+    def connectTrussButtons(self) -> None:
+        self.ui.addJointButton.clicked.connect(self.current_tab.previewJoint)
+        self.ui.addMemberButton.clicked.connect(self.current_tab.addMember)
+        self.ui.addSupportButton.clicked.connect(self.current_tab.supportForm)
+        self.ui.addForceButton.clicked.connect(self.current_tab.forceForm)
+
+    def disconnectTrussButtons(self) -> None:
+        self.ui.addJointButton.clicked.disconnect(
+            self.current_tab.previewJoint)
+        self.ui.addMemberButton.clicked.disconnect(self.current_tab.addMember)
+        self.ui.addSupportButton.clicked.disconnect(
+            self.current_tab.supportForm)
+        self.ui.addForceButton.clicked.disconnect(self.current_tab.forceForm)
+
     def handleTabChange(self) -> None:
         """Connects button signals to handler functions."""
         last_tab = self.current_tab
         new_tab: TrussWidget = self.ui.tabWidget.currentWidget()
-        self.disconnectActions()
 
-        # disconnect old signals
-        # checks to make sure signals are connected before attempting to disconnect
-        if last_tab != new_tab and not isinstance(last_tab, StartPage):
-            last_tab.interacted.disconnect(self.updateInfo)
-            last_tab.member_added.disconnect(self.loadMembers)
-            last_tab.joint_added.disconnect(self.loadJoints)
-            last_tab.support_added.disconnect(self.loadSupports)
-            last_tab.force_added.disconnect(self.loadForces)
-            self.ui.addJointButton.clicked.disconnect(last_tab.previewJoint)
-            self.ui.addMemberButton.clicked.disconnect(last_tab.addMember)
-            self.ui.addSupportButton.clicked.disconnect(last_tab.supportForm)
-            self.ui.addForceButton.clicked.disconnect(last_tab.forceForm)
-
-        # don't connect buttons if on start page
-        if isinstance(new_tab, StartPage):
-            self.connectFileActions()
+        if isinstance(last_tab, TrussWidget) and isinstance(new_tab, TrussWidget):
+            self.disconnectActions()
+            self.disconnectTrussButtons()
+            self.disconnectTrussSignals()
             self.current_tab = new_tab
-            return
-
-        # connect new signals
-        self.connectActions()
-        new_tab.interacted.connect(self.updateInfo)
-        new_tab.member_added.connect(self.loadMembers)
-        new_tab.joint_added.connect(self.loadJoints)
-        new_tab.support_added.connect(self.loadSupports)
-        new_tab.force_added.connect(self.loadForces)
-        self.ui.addJointButton.clicked.connect(new_tab.previewJoint)
-        self.ui.addMemberButton.clicked.connect(new_tab.addMember)
-        self.ui.addSupportButton.clicked.connect(new_tab.supportForm)
-        self.ui.addForceButton.clicked.connect(new_tab.forceForm)
-
-        self.current_tab = new_tab
+            self.connectActions()
+            self.connectTrussButtons()
+            self.connectTrussSignals()
+        elif isinstance(last_tab, StartPage) and isinstance(new_tab, TrussWidget):
+            self.disconnectFileActions()
+            self.current_tab = new_tab
+            self.connectActions()
+            self.connectTrussButtons()
+            self.connectTrussSignals()
+        elif isinstance(last_tab, TrussWidget) and isinstance(new_tab, StartPage):
+            self.disconnectActions()
+            self.disconnectTrussButtons()
+            self.disconnectTrussSignals()
+            self.current_tab = new_tab
+            self.connectFileActions()
+        elif isinstance(last_tab, StartPage) and isinstance(new_tab, StartPage):
+            self.current_tab = new_tab
+            self.connectFileActions()
 
     def updateTrussSelections(self) -> None:
         """Updates selected items on truss scene if item is selected on info tables."""

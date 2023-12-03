@@ -11,6 +11,7 @@ from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEven
 
 from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
+from dialogs.editcoordinates.editcoordinates import EditCoordinatesDialog
 from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES, DEFAULT_GENERAL_SETTINGS
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
 from widgets.trussview.graphicsitems import JointItem, MemberItem, PreviewJointItem, ForceItem, SupportItem
@@ -316,6 +317,13 @@ class TrussWidget(QGraphicsView):
             del self.__start_pos_pan
 
         return super().mouseReleaseEvent(event)
+
+    def handleAddJoint(self) -> None:
+        x_cord, y_cord, t_grad = EditCoordinatesDialog.getCoordinates(
+            None, Joint(0, 0))
+
+        if x_cord != None and y_cord != None and t_grad != None:
+            self.addJoint(Joint(x_cord, y_cord, t_grad))
 
     def addJoint(self, joint: Joint) -> None:
         """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""

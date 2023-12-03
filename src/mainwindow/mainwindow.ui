@@ -386,10 +386,27 @@
      <addaction name="actionForce"/>
      <addaction name="actionSupport"/>
     </widget>
+    <widget class="QMenu" name="menuAdd">
+     <property name="title">
+      <string>Add</string>
+     </property>
+     <widget class="QMenu" name="menuJoint">
+      <property name="title">
+       <string>Joint</string>
+      </property>
+      <addaction name="actionAddJointDrop"/>
+      <addaction name="actionAddJointDialog"/>
+     </widget>
+     <addaction name="menuJoint"/>
+     <addaction name="actionAddMember"/>
+     <addaction name="actionAddSupport"/>
+     <addaction name="actionAddForce"/>
+    </widget>
     <addaction name="actionedit"/>
     <addaction name="actionRedo"/>
     <addaction name="separator"/>
     <addaction name="menuDelete"/>
+    <addaction name="menuAdd"/>
    </widget>
    <widget class="QMenu" name="menuSolve">
     <property name="title">
@@ -558,6 +575,46 @@
   <action name="actionGeneral_Settings">
    <property name="text">
     <string>General Settings...</string>
+   </property>
+  </action>
+  <action name="actionAddJointDrop">
+   <property name="text">
+    <string>Drop</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+J</string>
+   </property>
+  </action>
+  <action name="actionAddJointDialog">
+   <property name="text">
+    <string>Dialog...</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+Shift+J</string>
+   </property>
+  </action>
+  <action name="actionAddMember">
+   <property name="text">
+    <string>Member</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+M</string>
+   </property>
+  </action>
+  <action name="actionAddSupport">
+   <property name="text">
+    <string>Support</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+S</string>
+   </property>
+  </action>
+  <action name="actionAddForce">
+   <property name="text">
+    <string>Force</string>
+   </property>
+   <property name="shortcut">
+    <string>Alt+F</string>
    </property>
   </action>
  </widget>
