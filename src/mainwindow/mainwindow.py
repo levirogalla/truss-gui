@@ -37,12 +37,10 @@ class MainWindow(QMainWindow):
 
         # tab stuff
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
-        self.current_tab: TrussWidget = self.ui.tabWidget.currentWidget()
+        self.current_tab: TrussWidget | StartPage = self.ui.tabWidget.currentWidget()
+        self.connectFileActions()
         self.handleTabChange()
         self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
-
-        # # connect actions
-        # self.handleTabChange()
 
         # info selection stuff
         self.connectInfoSignals()
@@ -326,29 +324,26 @@ class MainWindow(QMainWindow):
         last_tab = self.current_tab
         new_tab: TrussWidget = self.ui.tabWidget.currentWidget()
 
-        if isinstance(last_tab, TrussWidget) and isinstance(new_tab, TrussWidget):
-            self.disconnectActions()
-            self.disconnectTrussButtons()
-            self.disconnectTrussSignals()
-            self.current_tab = new_tab
-            self.connectActions()
-            self.connectTrussButtons()
-            self.connectTrussSignals()
-        elif isinstance(last_tab, StartPage) and isinstance(new_tab, TrussWidget):
+        if isinstance(last_tab, StartPage):
             self.disconnectFileActions()
-            self.current_tab = new_tab
-            self.connectActions()
-            self.connectTrussButtons()
-            self.connectTrussSignals()
-        elif isinstance(last_tab, TrussWidget) and isinstance(new_tab, StartPage):
+        if isinstance(last_tab, TrussWidget):
             self.disconnectActions()
             self.disconnectTrussButtons()
             self.disconnectTrussSignals()
-            self.current_tab = new_tab
+
+        self.current_tab = new_tab
+
+        if isinstance(new_tab, StartPage):
             self.connectFileActions()
-        elif isinstance(last_tab, StartPage) and isinstance(new_tab, StartPage):
-            self.current_tab = new_tab
-            self.connectFileActions()
+            self.ui.jointInfo.clear()
+            self.ui.memberInfo.clear()
+            self.ui.forceInfo.clear()
+            self.ui.supportInfo.clear()
+        if isinstance(new_tab, TrussWidget):
+            self.connectActions()
+            self.connectTrussButtons()
+            self.connectTrussSignals()
+            self.updateInfo()
 
     def updateTrussSelections(self) -> None:
         """Updates selected items on truss scene if item is selected on info tables."""
