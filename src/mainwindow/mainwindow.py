@@ -98,6 +98,9 @@ class MainWindow(QMainWindow):
             self.openGeneralSettings
         )
 
+        self.ui.actionZoom_In.triggered.connect(self.handleZoomIn)
+        self.ui.actionZoom_Out.triggered.connect(self.handleZoomOut)
+
     def disconnectViewActions(self):
         self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
         self.ui.actionTruss_Preferences.triggered.disconnect(
@@ -105,6 +108,16 @@ class MainWindow(QMainWindow):
         self.ui.actionGeneral_Settings.triggered.disconnect(
             self.openGeneralSettings
         )
+        self.ui.actionZoom_In.triggered.disconnect(self.handleZoomIn)
+        self.ui.actionZoom_Out.triggered.disconnect(self.handleZoomOut)
+
+    def handleZoomIn(self) -> None:
+        self.current_tab.resizeViewport(
+            self.current_tab.general_settings["zoom_step"])
+
+    def handleZoomOut(self) -> None:
+        self.current_tab.resizeViewport(
+            -self.current_tab.general_settings["zoom_step"]/4)
 
     def connectSolveActions(self):
         self.ui.actionSolve_Members.triggered.connect(
@@ -311,6 +324,9 @@ class MainWindow(QMainWindow):
         self.ui.addSupportButton.clicked.connect(self.current_tab.supportForm)
         self.ui.addForceButton.clicked.connect(self.current_tab.forceForm)
 
+        self.ui.zoomInButton.clicked.connect(self.handleZoomIn)
+        self.ui.zoomOutButton.clicked.connect(self.handleZoomOut)
+
     def disconnectTrussButtons(self) -> None:
         self.ui.addJointButton.clicked.disconnect(
             self.current_tab.previewJoint)
@@ -318,6 +334,9 @@ class MainWindow(QMainWindow):
         self.ui.addSupportButton.clicked.disconnect(
             self.current_tab.supportForm)
         self.ui.addForceButton.clicked.disconnect(self.current_tab.forceForm)
+
+        self.ui.zoomInButton.clicked.disconnect(self.handleZoomIn)
+        self.ui.zoomOutButton.clicked.disconnect(self.handleZoomOut)
 
     def handleTabChange(self) -> None:
         """Connects button signals to handler functions."""

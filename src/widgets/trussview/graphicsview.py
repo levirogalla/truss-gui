@@ -191,8 +191,8 @@ class TrussWidget(QGraphicsView):
     def pinchTriggered(self, gesture: QPinchGesture) -> None:
         """Scale the view from pinch gesture."""
         scale_factor = gesture.scaleFactor()
-        self.resizeViewport(scale_factor)
-        self.updateOrigin()
+        self.resizeViewport(
+            (1-scale_factor)*self.general_settings["zoom_sensitivity"])
 
     def previewJoint(self) -> None:
         """Show the preview joint. This is the first function to be called when attempting to add a joint."""
@@ -254,14 +254,14 @@ class TrussWidget(QGraphicsView):
         self.fitInView(self.sceneRect(),
                        Qt.AspectRatioMode.KeepAspectRatio)
 
-    def resizeViewport(self, scale: float):
-        diff = (1-scale)*self.general_settings["zoom_sensitivity"]
+    def resizeViewport(self, diff: float):
+        # print("here")
         new_rect = self.sceneRect().adjusted(-diff, -diff, diff, diff)
         if new_rect.width() > 0 and new_rect.height() > 0:
             self.setSceneRect(new_rect)
             self.fitInView(self.sceneRect(),
                            Qt.AspectRatioMode.KeepAspectRatio)
-            print(self.sceneRect())
+            self.updateOrigin()
 
     def resizeEvent(self, event: QResizeEvent):
         self.fitInView(self.sceneRect(),
@@ -323,21 +323,22 @@ class TrussWidget(QGraphicsView):
 
     def addJoint(self, joint: Joint) -> None:
         """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
-
+        new_joint = Joint(joint.x_coordinate,
+                          joint.y_coordinate, joint.track_grad)
         try:
-            self.truss.add_joint(joint)
+            self.truss.add_joint(new_joint)
         except ValueError as e:
             print(e)
             return
 
         item = JointItem(
-            joint,
+            new_joint,
             self.truss_view_preferences["joint_radius"],
             False,
             self.truss_view_preferences["joint_color"],
             self.truss_view_preferences["joint_focused_color"]
         )
-        self.connections[id(joint)] = item
+        self.connections[id(new_joint)] = item
         self.scene().addItem(item)
         self.joint_added.emit()
         self.interacted.emit()
