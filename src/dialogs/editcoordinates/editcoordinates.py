@@ -23,14 +23,16 @@ class EditCoordinatesDialog(QDialog):
 
         self.ui.xCoordinate.setText(str(joint.x_coordinate.item()))
         self.ui.yCoordinate.setText(str(joint.y_coordinate.item()))
+        self.ui.trackGrad.setCurrentText(str(joint.track_grad))
 
     def handleDone(self):
         self.x_coord = float(self.ui.xCoordinate.text())
         self.y_coord = float(self.ui.yCoordinate.text())
+        self.track_grad = True if self.ui.trackGrad.currentText() == "True" else False
         self.close()
 
     @staticmethod
     def getCoordinates(parent, joint: Joint) -> tuple[float, float]:
         dialog = EditCoordinatesDialog(parent, joint)
         dialog.exec()
-        return (dialog.x_coord, dialog.y_coord)
+        return (dialog.x_coord, dialog.y_coord, dialog.track_grad)

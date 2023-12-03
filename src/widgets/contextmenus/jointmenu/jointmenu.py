@@ -78,9 +78,10 @@ class JointMenu(QMenu):
         self.dialogs.remove(dialog)
 
     def edit_coordinates(self):
-        x_coord, y_coord = EditCoordinatesDialog.getCoordinates(
+        x_coord, y_coord, track_grad = EditCoordinatesDialog.getCoordinates(
             self.parent(), self.joint_item.joint)
         if x_coord is None or y_coord is None:
             return
         self.joint_item.joint.set_cordinates([x_coord, y_coord])
+        self.joint_item.joint.set_track_grad(track_grad)
         self.joint_item.updateSceneLocation()

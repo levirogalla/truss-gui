@@ -70,8 +70,12 @@ class TrussWidget(QGraphicsView):
         # ).itemsBoundingRect().width()*0.1), int(self.scene().itemsBoundingRect().height()*0.1))
         x_margin = self.scene().itemsBoundingRect().width()*0.1
         y_margin = self.scene().itemsBoundingRect().width()*0.1
-        self.setSceneRect(
-            self.scene().itemsBoundingRect().adjusted(-x_margin, -y_margin, x_margin, y_margin))
+        rect = self.scene().itemsBoundingRect(
+        ).adjusted(-x_margin, -y_margin, x_margin, y_margin)
+        biggest_side = max(rect.width(), rect.height())
+        rect.setHeight(biggest_side)
+        rect.setWidth(biggest_side)
+        self.setSceneRect(rect)
         self.fitInView(self.sceneRect(), Qt.AspectRatioMode.KeepAspectRatio)
         self.updateOrigin()
 
@@ -242,7 +246,6 @@ class TrussWidget(QGraphicsView):
                 current_pos_pan)
 
             self.translateViewport(translation.x(), translation.y())
-
             self.updateOrigin()
             self.__start_pos_pan = current_pos_pan
 
@@ -257,9 +260,11 @@ class TrussWidget(QGraphicsView):
     def resizeViewport(self, scale: float):
         diff = (1-scale)*self.general_settings["zoom_sensitivity"]
         new_rect = self.sceneRect().adjusted(-diff, -diff, diff, diff)
-        self.setSceneRect(new_rect)
-        self.fitInView(self.sceneRect(),
-                       Qt.AspectRatioMode.KeepAspectRatio)
+        if new_rect.width() > 0 and new_rect.height() > 0:
+            self.setSceneRect(new_rect)
+            self.fitInView(self.sceneRect(),
+                           Qt.AspectRatioMode.KeepAspectRatio)
+            print(self.sceneRect())
 
     def resizeEvent(self, event: QResizeEvent):
         self.fitInView(self.sceneRect(),
