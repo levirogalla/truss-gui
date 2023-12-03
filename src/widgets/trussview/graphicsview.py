@@ -65,10 +65,6 @@ class TrussWidget(QGraphicsView):
         self.edits = []
         self.loadTrussWidgetFromMesh(load_from_file=True)
 
-        # self.centerOn(0, 0)
-
-        # self.ensureVisible(self.scene().itemsBoundingRect(), int(self.scene(
-        # ).itemsBoundingRect().width()*0.1), int(self.scene().itemsBoundingRect().height()*0.1))
         x_margin = self.scene().itemsBoundingRect().width()*0.1
         y_margin = self.scene().itemsBoundingRect().width()*0.1
         rect = self.scene().itemsBoundingRect(
@@ -327,20 +323,21 @@ class TrussWidget(QGraphicsView):
 
     def addJoint(self, joint: Joint) -> None:
         """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
-        temp = Joint(0, 10+1e-5)
-        new_joint = Joint(joint.x_coordinate, joint.y_coordinate, True)
-        mem = Member(temp, new_joint)
-        self.truss.add_member(mem)
-        self.truss.delete_joint(temp)
+
+        try:
+            self.truss.add_joint(joint)
+        except ValueError as e:
+            print(e)
+            return
 
         item = JointItem(
-            new_joint,
+            joint,
             self.truss_view_preferences["joint_radius"],
             False,
             self.truss_view_preferences["joint_color"],
             self.truss_view_preferences["joint_focused_color"]
         )
-        self.connections[id(new_joint)] = item
+        self.connections[id(joint)] = item
         self.scene().addItem(item)
         self.joint_added.emit()
         self.interacted.emit()

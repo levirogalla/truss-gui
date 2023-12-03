@@ -405,13 +405,10 @@ class TrussItems(QDialog):
 
     def addJoint(self):
         joint = Joint(0, 0, False)
-        try:
-            x_cord, y_cord, track_grad = EditCoordinatesDialog.getCoordinates(
-                self, joint)
-            self.truss_widget.addJoint(
-                Joint(float(x_cord),  float(y_cord), track_grad))
-        except Exception:
-            print("Fail")
+        x_cord, y_cord, track_grad = EditCoordinatesDialog.getCoordinates(
+            self, joint)
+        self.truss_widget.addJoint(
+            Joint(float(x_cord),  float(y_cord), track_grad))
 
     def get_selected_items(self):
         selected_items = self.ui.connectedItems.selectedItems()
