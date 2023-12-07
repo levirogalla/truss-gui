@@ -39,6 +39,7 @@ DEFAULT_VIEW_PREFERENCES = {
 DEFAULT_GENERAL_SETTINGS = {
     "zoom_sensitivity": 10,
     "zoom_step": 5,
+    "pan_button": "Middle Mouse"
 }
 
 
@@ -87,8 +88,11 @@ class SavedTruss:
         """Loads the truss and settings."""
         SavedTruss.add_to_recent(file)
 
-        with open(file, "rb") as f:
-            saved_truss: Mesh | SavedTruss = pickle.load(f)
+        try:
+            with open(file, "rb") as f:
+                saved_truss: Mesh | SavedTruss = pickle.load(f)
+        except FileNotFoundError as e:
+            print(e)
 
         if isinstance(saved_truss, Mesh):
             loaded_truss = SavedTruss(saved_truss)

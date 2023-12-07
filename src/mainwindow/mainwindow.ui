@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>946</width>
-    <height>626</height>
+    <width>960</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -21,6 +21,18 @@
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QHBoxLayout" name="horizontalLayout">
+    <property name="leftMargin">
+     <number>6</number>
+    </property>
+    <property name="topMargin">
+     <number>6</number>
+    </property>
+    <property name="rightMargin">
+     <number>6</number>
+    </property>
+    <property name="bottomMargin">
+     <number>6</number>
+    </property>
     <item>
      <widget class="QWidget" name="controls" native="true">
       <property name="sizePolicy">
@@ -246,7 +258,7 @@
                <number>10</number>
               </property>
               <property name="topMargin">
-               <number>0</number>
+               <number>2</number>
               </property>
               <property name="rightMargin">
                <number>10</number>
@@ -257,7 +269,7 @@
               <item>
                <widget class="QLabel" name="label">
                 <property name="text">
-                 <string>Truss</string>
+                 <string>PyTruss GUI v0.0.0</string>
                 </property>
                </widget>
               </item>
@@ -463,7 +475,7 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>946</width>
+     <width>960</width>
      <height>24</height>
     </rect>
    </property>

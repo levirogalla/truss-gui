@@ -5,16 +5,16 @@ from pytruss import Mesh, Member, Force, Joint, Support
 from torch import optim
 
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
-from PyQt6.QtCore import QEvent, QPointF, Qt, pyqtSignal, QRectF, QThread, QLineF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush, QResizeEvent
-from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
+from PyQt6.QtCore import QEvent, QPoint, Qt, pyqtSignal, QRectF, QThread, QLineF
+from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush, QResizeEvent, QCursor
+from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture, QPanGesture
 
 from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
 from dialogs.editcoordinates.editcoordinates import EditCoordinatesDialog
 from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES, DEFAULT_GENERAL_SETTINGS
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
-from widgets.trussview.graphicsitems import JointItem, MemberItem, PreviewJointItem, ForceItem, SupportItem
+from widgets.trussview.graphicsitems import TrussItem, JointItem, MemberItem, PreviewJointItem, ForceItem, SupportItem
 
 
 class TrussWidget(QGraphicsView):
@@ -194,17 +194,21 @@ class TrussWidget(QGraphicsView):
         self.resizeViewport(
             (1-scale_factor)*self.general_settings["zoom_sensitivity"])
 
+    def updatePreviewJoint(self, position: QPoint) -> None:
+        self.preview_joint.setPos(self.mapToScene(position))
+        self.preview_joint.updateCartesianLocation()
+        self.scene().update()
+
     def previewJoint(self) -> None:
         """Show the preview joint. This is the first function to be called when attempting to add a joint."""
         self.showing_preview_joint = True
         self.preview_joint.show()
+        self.updatePreviewJoint(self.mapFromGlobal(QCursor.pos()))
         self.interacted.emit()
 
     def mouseMoveEvent(self, event: QMouseEvent | None) -> None:
         if self.showing_preview_joint:
-            self.preview_joint.setPos(self.mapToScene(event.pos()))
-            self.preview_joint.updateCartesianLocation()
-            self.scene().update()
+            self.updatePreviewJoint(event.pos())
             self.interacted.emit()
         elif self.showing_highlighted_rectangle:
             pos = event.pos()
@@ -254,9 +258,8 @@ class TrussWidget(QGraphicsView):
         self.fitInView(self.sceneRect(),
                        Qt.AspectRatioMode.KeepAspectRatio)
 
-    def resizeViewport(self, diff: float):
-        new_rect = self.sceneRect().adjusted(-diff, -diff, diff, diff)
-        print(new_rect.toRect())
+    def resizeViewport(self, delta: float):
+        new_rect = self.sceneRect().adjusted(-delta, -delta, delta, delta)
         if new_rect.width() > 0 and new_rect.height() > 0:
             self.setSceneRect(new_rect)
             self.fitInView(self.sceneRect(),
@@ -277,7 +280,13 @@ class TrussWidget(QGraphicsView):
         elif self.itemAt(event.pos()) is not None:
             # the user clicking on a scene item so do nothing
             pass
-        elif event.button() == Qt.MouseButton.MiddleButton:
+        elif event.button() == Qt.MouseButton.MiddleButton and self.general_settings["pan_button"] == "Middle Mouse":
+            self.paning = True
+            self.setCursor(Qt.CursorShape.ClosedHandCursor)
+
+            # will be used later
+            self.__start_pos_pan = event.pos()
+        elif event.button() == Qt.MouseButton.RightButton and self.general_settings["pan_button"] == "Right Mouse":
             self.paning = True
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
 
@@ -516,3 +525,17 @@ class TrussWidget(QGraphicsView):
         self.truss_optimization_settings = copy.copy(
             DEFAULT_OPTIMIZATION_SETTINGS)
         self.interacted.emit()
+
+    def deleteItem(self, item: TrussItem):
+        """For convience if the type of item that you would like to delete is not known."""
+
+        if isinstance(item, JointItem):
+            self.deleteJoint(item.joint)
+        elif isinstance(item, MemberItem):
+            self.deleteMember(item.member)
+        elif isinstance(item, ForceItem):
+            self.deleteForce(item.force)
+        elif isinstance(item, SupportItem):
+            self.deleteSupport(item.support)
+        else:
+            raise ValueError("pytruss- can not delete non TrussItem objects.")

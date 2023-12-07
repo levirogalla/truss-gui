@@ -1,4 +1,5 @@
 import copy
+import typing
 
 
 from pytruss import Mesh, Member, Force, Joint, Support
@@ -13,6 +14,7 @@ from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
 from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
+from widgets.contextmenus.selectedmenu.selectedmenu import SelectedMenu
 
 
 class TrussItem(QGraphicsItem):
@@ -39,6 +41,18 @@ class TrussItem(QGraphicsItem):
         # shouldn't this be local to the truss??
         # maybe both for error tracking
         self.scene().views()[0].edits.append(event)
+
+    def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.setSelected(not self.isSelected())
+        elif event.button() == Qt.MouseButton.RightButton:
+            menu = SelectedMenu(self.scene().views()[0])
+            menu.exec(self.scene().views()[
+                      0].mapToGlobal(self.scene().views()[
+                          0].mapFromScene(self.scenePos())))
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        return
 
 
 class JointItem(TrussItem):
@@ -144,15 +158,19 @@ class JointItem(TrussItem):
             self.scene().views()[0].interacted.emit()
 
         if event.button() == Qt.MouseButton.RightButton:
-            menu = JointMenu(self.scene().views()[0], self)
-            menu.exec(self.scene().views()[
-                      0].mapToGlobal(self.scene().views()[
-                          0].mapFromScene(self.scenePos())))
+            if self.isSelected():
+                super().mousePressEvent(event)
+            else:
+                menu = JointMenu(self.scene().views()[0], self)
+                menu.exec(self.scene().views()[
+                    0].mapToGlobal(self.scene().views()[
+                        0].mapFromScene(self.scenePos())))
 
-    def mouseMoveEvent(self, a0: QMouseEvent | None) -> None:
+    def mouseMoveEvent(self, a0: QGraphicsSceneMouseEvent | None) -> None:
         if self.__dragging:
             for member in self.joint.members:
-                member_item: MemberItem = self.getConnection(id(member))
+                member_item: MemberItem = self.getConnection(
+                    id(member))
                 member_item.prepareGeometryChange()
 
             for force in self.joint.forces:
@@ -164,7 +182,7 @@ class JointItem(TrussItem):
                     id(self.joint.support))
                 support_item.prepareGeometryChange()
 
-            new_pos = self.mapToParent(a0.pos() - self.offset)
+            new_pos = a0.scenePos() - self.offset
             self.setPos(new_pos)
             self.updateCartesianLocation()
             # to redraw the members
@@ -295,12 +313,6 @@ class MemberItem(TrussItem):
 
         return path
 
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        self.setSelected(not self.isSelected())
-
-    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        pass
-
 
 class SupportItem(TrussItem):
     """Class for Qt Support Item."""
@@ -385,12 +397,6 @@ class SupportItem(TrussItem):
 
         if draw_bound_box:
             painter.drawRect(self.boundingRect())
-
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        self.setSelected(not self.isSelected())
-
-    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        pass
 
 
 class ForceItem(TrussItem):
@@ -516,9 +522,3 @@ class ForceItem(TrussItem):
 
         if draw_bound_box:
             painter.drawRect(self.boundingRect())
-
-    def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        self.setSelected(not self.isSelected())
-
-    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
-        pass

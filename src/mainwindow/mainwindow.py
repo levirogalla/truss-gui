@@ -2,6 +2,7 @@
 
 import sys
 import functools
+import os
 
 from PyQt6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
 from PyQt6.QtCore import Qt
@@ -58,8 +59,9 @@ class MainWindow(QMainWindow):
         recent_files = SavedTruss.recent()
 
         for file in recent_files:
-            self.ui.menuOpen_Recent.addAction(
-                file, functools.partial(self.handleCreateNewTab, truss=TrussWidget(file)))
+            if os.path.exists(file):
+                self.ui.menuOpen_Recent.addAction(
+                    file, functools.partial(self.handleCreateNewTab, truss=TrussWidget(file)))
 
     def disconnectActions(self) -> None:
         try:
