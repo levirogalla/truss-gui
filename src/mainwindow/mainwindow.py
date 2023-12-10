@@ -489,6 +489,21 @@ class MainWindow(QMainWindow):
         self.disconnectInfoSignals()
         self.ui.supportInfo.setRowCount(
             len(self.current_tab.truss.supports))
+
+        self.ui.supportInfo.setColumnCount(6)
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            0, QTableWidgetItem("Support ID"))
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            1, QTableWidgetItem("Joint"))
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            2, QTableWidgetItem("Type"))
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            3, QTableWidgetItem("X Support Reaction"))
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            4, QTableWidgetItem("Y Support Reaction"))
+        self.ui.supportInfo.setHorizontalHeaderItem(
+            5, QTableWidgetItem("Moment Support Reaction"))
+
         for r, support in enumerate(self.current_tab.truss.supports):
             self.ui.supportInfo.setItem(
                 r, 0, QTableWidgetItem(str(id(support))))
@@ -519,10 +534,20 @@ class MainWindow(QMainWindow):
     def loadJoints(self) -> None:
         """Populates the joints info table."""
 
-        # self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.disconnectInfoSignals()
         self.ui.jointInfo.setRowCount(
             len(self.current_tab.truss.joints))
+
+        self.ui.jointInfo.setColumnCount(4)
+        self.ui.jointInfo.setHorizontalHeaderItem(
+            0, QTableWidgetItem("Joint ID"))
+        self.ui.jointInfo.setHorizontalHeaderItem(
+            1, QTableWidgetItem("X Coordinate"))
+        self.ui.jointInfo.setHorizontalHeaderItem(
+            2, QTableWidgetItem("Y Coordinate"))
+        self.ui.jointInfo.setHorizontalHeaderItem(
+            3, QTableWidgetItem("Track Grad"))
+
         for r, joint in enumerate(self.current_tab.truss.joints):
             self.ui.jointInfo.setItem(r, 0, QTableWidgetItem(str(id(joint))))
             self.ui.jointInfo.setItem(
@@ -538,13 +563,25 @@ class MainWindow(QMainWindow):
                 self.ui.jointInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 0, r, 3), True)
         self.connectInfoSignals()
-        # self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadMembers(self) -> None:
         """Populates the members info table."""
         self.disconnectInfoSignals()
         self.ui.memberInfo.setRowCount(
             len(self.current_tab.truss.members))
+
+        self.ui.memberInfo.setColumnCount(5)
+        self.ui.memberInfo.setHorizontalHeaderItem(
+            0, QTableWidgetItem("Member ID"))
+        self.ui.memberInfo.setHorizontalHeaderItem(
+            1, QTableWidgetItem("Joint A"))
+        self.ui.memberInfo.setHorizontalHeaderItem(
+            2, QTableWidgetItem("Joint B"))
+        self.ui.memberInfo.setHorizontalHeaderItem(
+            3, QTableWidgetItem("Internal Force"))
+        self.ui.memberInfo.setHorizontalHeaderItem(
+            4, QTableWidgetItem("Force Type"))
+
         for r, member in enumerate(self.current_tab.truss.members):
             self.ui.memberInfo.setItem(r, 0, QTableWidgetItem(str(id(member))))
             self.ui.memberInfo.setItem(
@@ -578,6 +615,19 @@ class MainWindow(QMainWindow):
         self.disconnectInfoSignals()
         self.ui.forceInfo.setRowCount(
             len(self.current_tab.truss.forces))
+
+        self.ui.forceInfo.setColumnCount(5)
+        self.ui.forceInfo.setHorizontalHeaderItem(
+            0, QTableWidgetItem("Force ID"))
+        self.ui.forceInfo.setHorizontalHeaderItem(
+            1, QTableWidgetItem("Joint"))
+        self.ui.forceInfo.setHorizontalHeaderItem(
+            2, QTableWidgetItem("X Component"))
+        self.ui.forceInfo.setHorizontalHeaderItem(
+            3, QTableWidgetItem("Y Component"))
+        self.ui.forceInfo.setHorizontalHeaderItem(
+            4, QTableWidgetItem("Type"))
+
         for r, force in enumerate(self.current_tab.truss.forces):
             self.ui.forceInfo.setItem(r, 0, QTableWidgetItem(str(id(force))))
             self.ui.forceInfo.setItem(r, 1, QTableWidgetItem(str(force.joint)))
