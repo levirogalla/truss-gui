@@ -1,11 +1,4 @@
-import typing
-from PyQt6 import QtCore
-from PyQt6.QtWidgets import QMenu, QDialog, QWidget
-from pytruss import Support, Joint, Mesh, Force, Member
-
-# from .trusswidget2 import JointItem, TrussWidget
-from dialogs.manageitems.manageitems import JointConnections
-from dialogs.editcoordinates.editcoordinates import EditCoordinatesDialog
+from PyQt6.QtWidgets import QMenu
 
 
 class SelectedMenu(QMenu):
@@ -18,7 +11,7 @@ class SelectedMenu(QMenu):
 
         self.delete_items.triggered.connect(self.handle_delete)
 
-    def handle_delete(self):
+    def handle_delete(self) -> None:
         """Delete the joint."""
 
         for item in self.parent().scene().selectedItems():

@@ -1,7 +1,5 @@
-import typing
-from PyQt6 import QtCore
-from PyQt6.QtWidgets import QMenu, QDialog, QWidget
-from pytruss import Support, Joint, Mesh, Force, Member
+from PyQt6.QtWidgets import QDialog
+from pytruss import Joint
 
 # from .trusswidget2 import JointItem, TrussWidget
 from .editcoordinates_ui import Ui_EditCoordinatesDialog

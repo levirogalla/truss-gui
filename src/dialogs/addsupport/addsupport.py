@@ -1,8 +1,6 @@
-from typing import Callable
-
 from PyQt6.QtWidgets import QDialog
 from .addsupport_ui import Ui_addSupportForm
-from pytruss import Support, Joint
+from pytruss import Joint
 
 
 class AddSupportDialog(QDialog):

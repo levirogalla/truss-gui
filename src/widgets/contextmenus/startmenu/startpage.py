@@ -1,7 +1,6 @@
-from PyQt6.QtWidgets import QWidget, QFrame
+from PyQt6.QtWidgets import QFrame
 
 from .startpage_ui import Ui_StartPage
-from widgets.trussview.graphicsview import TrussWidget
 
 
 class StartPage(QFrame):

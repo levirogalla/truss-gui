@@ -1,17 +1,10 @@
-import copy
-import typing
-
-
-from pytruss import Mesh, Member, Force, Joint, Support
-from torch import optim
+from pytruss import Member, Force, Joint, Support
 
 from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
-from PyQt6.QtCore import QEvent, QPointF, Qt, pyqtSignal, QRectF, QThread, QLineF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush
-from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture
+from PyQt6.QtCore import QPointF, Qt,  QRectF
+from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QColor, QPainterPath, QBrush
+from PyQt6.QtWidgets import QWidget
 
-from dialogs.addsupport.addsupport import AddSupportDialog
-from dialogs.addforce.addforce import AddForceDialog
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
 from widgets.contextmenus.selectedmenu.selectedmenu import SelectedMenu
 

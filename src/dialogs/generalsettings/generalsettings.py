@@ -1,8 +1,4 @@
-import typing
-from PyQt6 import QtGui
-
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QDialog, QWidget
+from PyQt6.QtWidgets import QDialog
 
 from .generalsettings_ui import Ui_generalSettings
 from widgets.trussview.graphicsview import TrussWidget

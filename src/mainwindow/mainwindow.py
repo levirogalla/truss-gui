@@ -5,11 +5,10 @@ import functools
 import os
 
 from PyQt6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
-from PyQt6.QtCore import Qt
 from pytruss import Force, Member, Joint, Support
 
 from .mainwindow_ui import Ui_MainWindow
-from widgets.trussview.graphicsitems import JointItem, MemberItem, ForceItem, JointItem
+from widgets.trussview.graphicsitems import JointItem, JointItem
 from widgets.trussview.graphicsview import TrussWidget
 from widgets.contextmenus.startmenu.startpage import StartPage
 from dialogs.checksave.checksave import CheckSaveDialog
