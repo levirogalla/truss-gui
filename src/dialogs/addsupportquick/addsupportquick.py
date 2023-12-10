@@ -3,7 +3,7 @@ from .addsupportquick_ui import Ui_AddSupportDialog
 
 
 class AddSupportQuickDialog(QDialog):
-    """Class for optimization window dialog."""
+    """Class for add support form. Does not allow for joint selection."""
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -20,7 +20,8 @@ class AddSupportQuickDialog(QDialog):
         self.close()
 
     @staticmethod
-    def getType(parent) -> str:
+    def get_type(parent) -> str:
+        "Show dialog for and get the type for a support"
         dialog = AddSupportQuickDialog(parent)
         dialog.exec()
         return dialog.type

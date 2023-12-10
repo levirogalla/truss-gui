@@ -1,11 +1,6 @@
-import copy
 import typing
 
-from matplotlib import pyplot as plt
-from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
-
-from PyQt6.QtCore import QObject, QTimer, Qt
-from PyQt6.QtWidgets import QDialog, QFileDialog, QWidget, QTableWidgetItem, QTableWidgetSelectionRange, QTableWidget, QMessageBox
+from PyQt6.QtWidgets import QDialog,  QTableWidgetItem, QTableWidget, QMessageBox
 
 from pytruss import Mesh, Joint, Member, Support, Force
 
@@ -47,7 +42,7 @@ class JointConnections(QDialog):
             self.ui.addButton.pressed.connect(self.addSupport)
             self.ui.deleteButton.pressed.connect(self.deleteSupport)
 
-    def __loadMembers(self):
+    def __loadMembers(self) -> None:
         """Populate the table with connected members."""
         self.ui.connectedItems.setRowCount(
             len(self.joint_item.joint.members))
@@ -85,7 +80,7 @@ class JointConnections(QDialog):
         # deactive add and delete button because idk how to implement those in a nice way
         self.ui.addButton.setEnabled(False)
 
-    def __loadSupport(self):
+    def __loadSupport(self) -> None:
         """Populate the table with connected support."""
         support = self.joint_item.joint.support
         self.ui.connectedItems.clear()
@@ -123,7 +118,7 @@ class JointConnections(QDialog):
 
         self.ui.connectedItems.resizeColumnsToContents()
 
-    def __loadForces(self):
+    def __loadForces(self) -> None:
         """Populate the table with connected forces."""
         self.ui.connectedItems.setRowCount(
             len(self.joint_item.joint.forces))
@@ -157,25 +152,29 @@ class JointConnections(QDialog):
 
         self.ui.connectedItems.resizeColumnsToContents()
 
-    def addForce(self):
-        x_comp, y_comp = AddForceQuickDialog.getComponents(self)
+    def addForce(self) -> None:
+        "Add force."
+        x_comp, y_comp = AddForceQuickDialog.get_components(self)
         if x_comp is None or y_comp is None:
             return
         self.truss_widget.addForce(
             Force(self.joint_item.joint, x_comp, y_comp))
         self.__loadForces()
 
-    def addMember(self):
+    def addMember(self) -> None:
+        "Add member."
         pass
 
-    def addSupport(self):
-        support_type = AddSupportQuickDialog.getType(self)
+    def addSupport(self) -> None:
+        "Add support."
+        support_type = AddSupportQuickDialog.get_type(self)
         if support_type is None:
             return
         self.truss_widget.addSupport(self.joint_item.joint, support_type)
         self.__loadSupport()
 
-    def get_selected_items(self):
+    def get_selected_items(self) -> typing.Generator:
+        "Gets items selected on the table."
         selected_items = self.ui.connectedItems.selectedItems()
 
         rows_visted = set()
@@ -187,18 +186,21 @@ class JointConnections(QDialog):
                 rows_visted.add(row)
                 yield item
 
-    def deleteForce(self):
+    def deleteForce(self) -> None:
+        "Delete forces from truss."
         for force in self.get_selected_items():
             self.truss_widget.deleteForce(force.force)
 
         self.__loadForces()
 
-    def deleteMember(self):
+    def deleteMember(self) -> None:
+        "Delete members from truss."
         for member in self.get_selected_items():
             self.truss_widget.deleteMember(member.member)
         self.__loadMembers()
 
-    def deleteSupport(self):
+    def deleteSupport(self) -> None:
+        "Delete supports from truss."
         for support in self.get_selected_items():
             self.truss_widget.deleteSupport(support.support)
 
@@ -212,7 +214,6 @@ class TrussItems(QDialog):
         super().__init__()
         self.truss_widget = truss_widget
 
-        print("here", truss_widget.truss.forces)
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
         self.truss: Mesh = truss_widget.truss
@@ -244,7 +245,7 @@ class TrussItems(QDialog):
             self.ui.deleteButton.pressed.connect(self.deleteJoint)
             truss_widget.interacted.connect(self.__loadJoints)
 
-    def __loadMembers(self):
+    def __loadMembers(self) -> None:
         """Populate the table with connected members."""
         self.ui.connectedItems.setRowCount(
             len(self.truss.members))
@@ -282,7 +283,7 @@ class TrussItems(QDialog):
         # deactive add and delete button because idk how to implement those in a nice way
         self.ui.addButton.setEnabled(False)
 
-    def __loadSupports(self):
+    def __loadSupports(self) -> None:
         """Populate the table with connected support."""
         self.ui.connectedItems.setRowCount(
             len(self.truss.supports))
@@ -321,7 +322,7 @@ class TrussItems(QDialog):
 
         self.ui.connectedItems.resizeColumnsToContents()
 
-    def __loadForces(self):
+    def __loadForces(self) -> None:
         """Populate the table with connected forces."""
         self.ui.connectedItems.setRowCount(
             len(self.truss.forces))
@@ -356,7 +357,7 @@ class TrussItems(QDialog):
 
         self.ui.connectedItems.resizeColumnsToContents()
 
-    def __loadJoints(self):
+    def __loadJoints(self) -> None:
         """Populate the table with connected forces."""
         self.ui.connectedItems.setRowCount(
             len(self.truss.joints))
@@ -385,7 +386,8 @@ class TrussItems(QDialog):
                 r, 3, QTableWidgetItem(str(joint.track_grad))
             )
 
-    def addForce(self):
+    def addForce(self) -> None:
+        "Add force via table."
         force = AddForceDialog.get_force(self.truss.joints, None)
         if force is None:
             QMessageBox.warning(
@@ -394,23 +396,27 @@ class TrussItems(QDialog):
         self.truss_widget.addForce(force)
         self.__loadForces()
 
-    def addMember(self):
-        pass
+    def addMember(self) -> None:
+        "Not Implemented"
+        raise NotImplementedError
 
-    def addSupport(self):
+    def addSupport(self) -> None:
+        "Add support via table."
         joint, support_type = AddSupportDialog.get_support(
             self.truss.joints, None)
         self.truss_widget.addSupport(joint, support_type)
         self.__loadSupports()
 
-    def addJoint(self):
+    def addJoint(self) -> None:
+        "Add joint via table."
         joint = Joint(0, 0, False)
         x_cord, y_cord, track_grad = EditCoordinatesDialog.getCoordinates(
             self, joint)
         self.truss_widget.addJoint(
             Joint(float(x_cord),  float(y_cord), track_grad))
 
-    def get_selected_items(self):
+    def get_selected_items(self) -> typing.Generator:
+        """Get selected items on table."""
         selected_items = self.ui.connectedItems.selectedItems()
 
         rows_visted = set()
@@ -426,23 +432,27 @@ class TrussItems(QDialog):
                 rows_visted.add(row)
                 yield item
 
-    def deleteForce(self):
+    def deleteForce(self) -> None:
+        "Delete a force via table."
         for force in self.get_selected_items():
             self.truss_widget.deleteForce(force.force)
 
         self.__loadForces()
 
-    def deleteMember(self):
+    def deleteMember(self) -> None:
+        "Delete a member via table."
         for member in self.get_selected_items():
             self.truss_widget.deleteMember(member.member)
         self.__loadMembers()
 
-    def deleteSupport(self):
+    def deleteSupport(self) -> None:
+        "Delete a support via table."
         for support in self.get_selected_items():
             self.truss_widget.deleteSupport(support.support)
         self.__loadSupports()
 
-    def deleteJoint(self):
+    def deleteJoint(self) -> None:
+        "Delete joints via table."
         for joint in self.get_selected_items():
             self.truss_widget.deleteJoint(joint.joint)
 

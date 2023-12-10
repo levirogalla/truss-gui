@@ -13,7 +13,7 @@ class StartPage(QFrame):
         self.ui.setupUi(self)
         self.main_window = None
 
-    def set_main_window(self, main_window):
+    def set_main_window(self, main_window) -> None:
         self.main_window = main_window
 
         self.ui.newButton.pressed.connect(main_window.handleCreateNewTab)

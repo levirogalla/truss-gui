@@ -52,7 +52,8 @@ class SavedTruss:
         self.view_preferences = view_preferences
 
     @staticmethod
-    def add_to_recent(path):
+    def add_to_recent(path) -> None:
+        """Add a recently opened or saved file to recent files. Max recent files is 5."""
         files = SavedTruss.recent()
         if len(files) > 5:
             files.pop()
@@ -73,6 +74,7 @@ class SavedTruss:
 
     @staticmethod
     def recent() -> list[str]:
+        """Get the recent files."""
         try:
             with open("src/utils/recent.txt", "r") as f:
                 files = f.read().split("\n")
@@ -92,7 +94,8 @@ class SavedTruss:
             with open(file, "rb") as f:
                 saved_truss: Mesh | SavedTruss = pickle.load(f)
         except FileNotFoundError as e:
-            print(e)
+            print("Truss file not found", e)
+            saved_truss = Mesh()
 
         if isinstance(saved_truss, Mesh):
             loaded_truss = SavedTruss(saved_truss)
@@ -114,6 +117,7 @@ class SavedTruss:
 
     @staticmethod
     def get_general_settings() -> dict:
+        """Get user defined general settings."""
         try:
             with open("src/utils/generalsettings.pkl", "rb") as f:
                 loaded_settings: dict = pickle.load(f)
@@ -126,5 +130,6 @@ class SavedTruss:
 
     @staticmethod
     def save_general_settings(setting: dict) -> None:
+        """Save general settings."""
         with open("src/utils/generalsettings.pkl", "wb") as f:
             pickle.dump(setting, f)

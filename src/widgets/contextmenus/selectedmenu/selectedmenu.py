@@ -9,7 +9,7 @@ from dialogs.editcoordinates.editcoordinates import EditCoordinatesDialog
 
 
 class SelectedMenu(QMenu):
-    """Joint right-click menu."""
+    """Right click menu for selected items."""
 
     def __init__(self, parent: "TrussWidget"):
         super().__init__(parent)
@@ -19,7 +19,7 @@ class SelectedMenu(QMenu):
         self.delete_items.triggered.connect(self.handle_delete)
 
     def handle_delete(self):
-        print(self.parent().connections)
+        """Delete the joint."""
 
         for item in self.parent().scene().selectedItems():
             # make sure the item wasn't already deleted

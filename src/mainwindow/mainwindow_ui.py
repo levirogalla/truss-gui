@@ -12,7 +12,7 @@ from PyQt6 import QtCore, QtGui, QtWidgets
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName("MainWindow")
-        MainWindow.resize(960, 598)
+        MainWindow.resize(960, 611)
         MainWindow.setMinimumSize(QtCore.QSize(0, 0))
         self.centralwidget = QtWidgets.QWidget(parent=MainWindow)
         self.centralwidget.setObjectName("centralwidget")
@@ -224,7 +224,7 @@ class Ui_MainWindow(object):
         self.horizontalLayout.addWidget(self.widget_2)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtWidgets.QMenuBar(parent=MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 960, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 960, 37))
         self.menubar.setObjectName("menubar")
         self.menuFile = QtWidgets.QMenu(parent=self.menubar)
         self.menuFile.setObjectName("menuFile")
@@ -367,7 +367,7 @@ class Ui_MainWindow(object):
         self.addForceButton.setText(_translate("MainWindow", "Add Force"))
         self.addSupportButton.setText(_translate("MainWindow", "Add Support"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.start), _translate("MainWindow", "Start"))
-        self.label.setText(_translate("MainWindow", "PyTruss GUI v0.0.0"))
+        self.label.setText(_translate("MainWindow", "Truss Maker v0.0.0"))
         self.zoomOutButton.setText(_translate("MainWindow", "-"))
         self.zoomInButton.setText(_translate("MainWindow", "+"))
         item = self.jointInfo.horizontalHeaderItem(0)

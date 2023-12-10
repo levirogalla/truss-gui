@@ -126,5 +126,4 @@ class TrussPreferences(QDialog):
         """Resets truss settings to default."""
         self.parentWidget().resetViewSettings()
         self.loadCurrentSettings()
-        print(self.parentWidget().truss_view_preferences)
         self.update()

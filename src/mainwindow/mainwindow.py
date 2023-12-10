@@ -40,13 +40,13 @@ class MainWindow(QMainWindow):
         self.ui.tabWidget.currentChanged.connect(self.handleTabChange)
         self.current_tab: TrussWidget | StartPage = self.ui.tabWidget.currentWidget()
         self.connectFileActions()
+        self.connectSettingsActions()
         self.handleTabChange()
         self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
 
         # info selection stuff
         self.connectInfoSignals()
 
-        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
         self.ui.actionStart.triggered.connect(
             lambda: self.ui.tabWidget.addTab(StartPage(), "Start"))
 
@@ -55,15 +55,21 @@ class MainWindow(QMainWindow):
         # for the open recent action
         self.showRecentFiles()
 
-    def showRecentFiles(self):
+    def showRecentFiles(self) -> None:
+        "Shows recent files under file action."
         recent_files = SavedTruss.recent()
 
         for file in recent_files:
             if os.path.exists(file):
                 self.ui.menuOpen_Recent.addAction(
-                    file, functools.partial(self.handleCreateNewTab, truss=TrussWidget(file)))
+                    file, functools.partial(self.handleCreateNewTabFromFile, file=file))
+
+    def handleCreateNewTabFromFile(self, file: str) -> bool:
+        """Opens a file from a specified path."""
+        self.handleCreateNewTab(TrussWidget(file))
 
     def disconnectActions(self) -> None:
+        "Disconnects file, edit, solve and view actions."
         try:
             # file actions
             self.disconnectFileActions()
@@ -76,10 +82,15 @@ class MainWindow(QMainWindow):
 
             # view actions
             self.disconnectViewActions()
+
+            # settings actions
+            self.disconnectSettingsActions()
+
         except TypeError as e:
             print("Some or all actions aren't connected.", e)
 
     def connectActions(self) -> None:
+        """Connects file, edit, solve, and view actions."""
         # file actions
         self.connectFileActions()
 
@@ -92,36 +103,51 @@ class MainWindow(QMainWindow):
         # view actions
         self.connectViewActions()
 
-    def connectViewActions(self):
-        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
-        self.ui.actionTruss_Preferences.triggered.connect(
-            self.openTrussPreferences)
+        # settings actions
+        self.connectSettingsActions()
+
+    def connectSettingsActions(self) -> None:
+        """Connect settings actions."""
         self.ui.actionGeneral_Settings.triggered.connect(
             self.openGeneralSettings
         )
 
-        self.ui.actionZoom_In.triggered.connect(self.handleZoomIn)
-        self.ui.actionZoom_Out.triggered.connect(self.handleZoomOut)
-
-    def disconnectViewActions(self):
-        self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
-        self.ui.actionTruss_Preferences.triggered.disconnect(
-            self.openTrussPreferences)
+    def disconnectSettingsActions(self) -> None:
+        """Disconnect settings actions."""
         self.ui.actionGeneral_Settings.triggered.disconnect(
             self.openGeneralSettings
         )
+
+    def connectViewActions(self) -> None:
+        """Connect view actions."""
+        self.ui.actionView_in_MPL.triggered.connect(self.openTrussInMPL)
+        self.ui.actionTruss_Preferences.triggered.connect(
+            self.openTrussPreferences)
+
+        self.ui.actionZoom_In.triggered.connect(self.handleZoomIn)
+        self.ui.actionZoom_Out.triggered.connect(self.handleZoomOut)
+
+    def disconnectViewActions(self) -> None:
+        """Disconnect view actions."""
+        self.ui.actionView_in_MPL.triggered.disconnect(self.openTrussInMPL)
+        self.ui.actionTruss_Preferences.triggered.disconnect(
+            self.openTrussPreferences)
+
         self.ui.actionZoom_In.triggered.disconnect(self.handleZoomIn)
         self.ui.actionZoom_Out.triggered.disconnect(self.handleZoomOut)
 
     def handleZoomIn(self) -> None:
+        """Handles zooming in by user defined step amount."""
         self.current_tab.resizeViewport(
             -self.current_tab.general_settings["zoom_step"])
 
     def handleZoomOut(self) -> None:
+        """Handles zooming out by used defined step amount."""
         self.current_tab.resizeViewport(
             self.current_tab.general_settings["zoom_step"])
 
-    def connectSolveActions(self):
+    def connectSolveActions(self) -> None:
+        """Connect solve acions."""
         self.ui.actionSolve_Members.triggered.connect(
             self.handleSolveMembers)
         self.ui.actionSolve_Reactions.triggered.connect(
@@ -130,7 +156,8 @@ class MainWindow(QMainWindow):
             self.handleOptimize
         )
 
-    def disconnectSolveActions(self):
+    def disconnectSolveActions(self) -> None:
+        """Disconnect solve actions."""
         self.ui.actionSolve_Members.triggered.disconnect(
             self.handleSolveMembers)
         self.ui.actionSolve_Reactions.triggered.disconnect(
@@ -139,7 +166,8 @@ class MainWindow(QMainWindow):
             self.handleOptimize
         )
 
-    def connectEditActions(self):
+    def connectEditActions(self) -> None:
+        """Connect edit actions."""
         self.ui.actionForce.triggered.connect(self.openForcesTable)
         self.ui.actionMember.triggered.connect(self.openMembersTable)
         self.ui.actionSupport.triggered.connect(self.openSupportsTable)
@@ -154,7 +182,8 @@ class MainWindow(QMainWindow):
         self.ui.actionAddSupport.triggered.connect(
             self.current_tab.supportForm)
 
-    def disconnectEditActions(self):
+    def disconnectEditActions(self) -> None:
+        """Disconnect edit actions."""
         self.ui.actionForce.triggered.disconnect(self.openForcesTable)
         self.ui.actionMember.triggered.disconnect(self.openMembersTable)
         self.ui.actionSupport.triggered.disconnect(self.openSupportsTable)
@@ -170,13 +199,15 @@ class MainWindow(QMainWindow):
         self.ui.actionAddSupport.triggered.disconnect(
             self.current_tab.supportForm)
 
-    def connectFileActions(self):
+    def connectFileActions(self) -> None:
+        """Connect file actions."""
         self.ui.actionNew.triggered.connect(self.handleCreateNewTab)
         self.ui.actionOpen.triggered.connect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.connect(self.saveAs)
         self.ui.actionSave.triggered.connect(self.handleSave)
 
-    def disconnectFileActions(self):
+    def disconnectFileActions(self) -> None:
+        "Disconnect file actions."
         self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
         self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.disconnect(self.saveAs)
@@ -188,6 +219,7 @@ class MainWindow(QMainWindow):
         dialog.exec()
 
     def openGeneralSettings(self) -> None:
+        """Open general settings dialog."""
         dialog = GeneralSettings(self.current_tab)
         dialog.exec()
 
@@ -286,6 +318,7 @@ class MainWindow(QMainWindow):
 
     def connectInfoSignals(self) -> None:
         """Connects info table signals to handlers."""
+        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
         self.ui.jointInfo.itemSelectionChanged.connect(
             self.updateTrussSelections)
         self.ui.memberInfo.itemSelectionChanged.connect(
@@ -297,6 +330,7 @@ class MainWindow(QMainWindow):
 
     def disconnectInfoSignals(self) -> None:
         """Disconnects info table signals to handlers."""
+        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
         self.ui.jointInfo.itemSelectionChanged.disconnect(
             self.updateTrussSelections)
         self.ui.memberInfo.itemSelectionChanged.disconnect(
@@ -307,6 +341,7 @@ class MainWindow(QMainWindow):
             self.updateTrussSelections)
 
     def connectTrussSignals(self) -> None:
+        """Connect truss interaction signals."""
         self.current_tab.interacted.connect(self.updateInfo)
         self.current_tab.member_added.connect(self.loadMembers)
         self.current_tab.joint_added.connect(self.loadJoints)
@@ -314,6 +349,7 @@ class MainWindow(QMainWindow):
         self.current_tab.force_added.connect(self.loadForces)
 
     def disconnectTrussSignals(self) -> None:
+        """Disconnect truss interaction signals."""
         self.current_tab.interacted.disconnect(self.updateInfo)
         self.current_tab.member_added.disconnect(self.loadMembers)
         self.current_tab.joint_added.disconnect(self.loadJoints)
@@ -321,6 +357,7 @@ class MainWindow(QMainWindow):
         self.current_tab.force_added.disconnect(self.loadForces)
 
     def connectTrussButtons(self) -> None:
+        """Connect truss buttons to currently showing truss tab."""
         self.ui.addJointButton.clicked.connect(self.current_tab.previewJoint)
         self.ui.addMemberButton.clicked.connect(self.current_tab.addMember)
         self.ui.addSupportButton.clicked.connect(self.current_tab.supportForm)
@@ -330,6 +367,7 @@ class MainWindow(QMainWindow):
         self.ui.zoomOutButton.clicked.connect(self.handleZoomOut)
 
     def disconnectTrussButtons(self) -> None:
+        """Disconnect truss buttons from currently showing truss tab."""
         self.ui.addJointButton.clicked.disconnect(
             self.current_tab.previewJoint)
         self.ui.addMemberButton.clicked.disconnect(self.current_tab.addMember)
@@ -347,15 +385,18 @@ class MainWindow(QMainWindow):
 
         if isinstance(last_tab, StartPage):
             self.disconnectFileActions()
+            self.disconnectSettingsActions()
         if isinstance(last_tab, TrussWidget):
             self.disconnectActions()
             self.disconnectTrussButtons()
             self.disconnectTrussSignals()
+            self.disconnectInfoSignals()
 
         self.current_tab = new_tab
 
         if isinstance(new_tab, StartPage):
             self.connectFileActions()
+            self.connectSettingsActions()
             self.ui.jointInfo.clear()
             self.ui.memberInfo.clear()
             self.ui.forceInfo.clear()
@@ -364,6 +405,7 @@ class MainWindow(QMainWindow):
             self.connectActions()
             self.connectTrussButtons()
             self.connectTrussSignals()
+            self.connectInfoSignals()
             self.updateInfo()
 
     def updateTrussSelections(self) -> None:
@@ -430,22 +472,22 @@ class MainWindow(QMainWindow):
         Updates the info tables with truss items data.
         Clears all current tables and re-populates them.
         """
-        self.disconnectInfoSignals()
 
-        self.ui.jointInfo.clearSelection()
-        self.ui.memberInfo.clearSelection()
-        self.ui.forceInfo.clearSelection()
-        self.ui.supportInfo.clearSelection()
+        self.disconnectInfoSignals()
+        self.ui.jointInfo.clear()
+        self.ui.memberInfo.clear()
+        self.ui.forceInfo.clear()
+        self.ui.supportInfo.clear()
+        self.connectInfoSignals()
+
         self.loadJoints()
         self.loadMembers()
         self.loadSupports()
         self.loadForces()
 
-        self.connectInfoSignals()
-
     def loadSupports(self) -> None:
         """Populates the support info table."""
-        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
+        self.disconnectInfoSignals()
         self.ui.supportInfo.setRowCount(
             len(self.current_tab.truss.supports))
         for r, support in enumerate(self.current_tab.truss.supports):
@@ -473,12 +515,13 @@ class MainWindow(QMainWindow):
                 self.ui.memberInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 1, r, 1), True)
 
-        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+        self.connectInfoSignals()
 
     def loadJoints(self) -> None:
         """Populates the joints info table."""
 
-        self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
+        # self.ui.jointInfo.cellChanged.disconnect(self.updateJointLocation)
+        self.disconnectInfoSignals()
         self.ui.jointInfo.setRowCount(
             len(self.current_tab.truss.joints))
         for r, joint in enumerate(self.current_tab.truss.joints):
@@ -492,15 +535,15 @@ class MainWindow(QMainWindow):
             self.ui.jointInfo.setItem(
                 r, 3, QTableWidgetItem(str(joint.track_grad))
             )
-
             if self.itemIsSelected(joint):
                 self.ui.jointInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 0, r, 3), True)
-
-        self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
+        self.connectInfoSignals()
+        # self.ui.jointInfo.cellChanged.connect(self.updateJointLocation)
 
     def loadMembers(self) -> None:
         """Populates the members info table."""
+        self.disconnectInfoSignals()
         self.ui.memberInfo.setRowCount(
             len(self.current_tab.truss.members))
         for r, member in enumerate(self.current_tab.truss.members):
@@ -529,9 +572,11 @@ class MainWindow(QMainWindow):
             if self.itemIsSelected(member.joint_b):
                 self.ui.memberInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 2, r, 2), True)
+        self.connectInfoSignals()
 
     def loadForces(self) -> None:
         """Populates the forces info table."""
+        self.disconnectInfoSignals()
         self.ui.forceInfo.setRowCount(
             len(self.current_tab.truss.forces))
         for r, force in enumerate(self.current_tab.truss.forces):
@@ -554,6 +599,7 @@ class MainWindow(QMainWindow):
             if self.itemIsSelected(force.joint):
                 self.ui.forceInfo.setRangeSelected(
                     QTableWidgetSelectionRange(r, 1, r, 1), True)
+        self.connectInfoSignals()
 
     def itemIsSelected(self, truss_item) -> bool:
         """Returns wether a truss item is selected on the scene."""
@@ -561,29 +607,34 @@ class MainWindow(QMainWindow):
             return self.current_tab.connections[id(truss_item)].isSelected()
         return False
 
-    def deleteDialog(self, dialog: QDialog):
+    def deleteDialog(self, dialog: QDialog) -> None:
+        """Deletes a dialog."""
         dialog.deleteLater()
         self.dialogs.remove(dialog)
 
-    def openForcesTable(self):
+    def openForcesTable(self) -> None:
+        """Opens the force table."""
         dialog = TrussItems(self.current_tab, Force)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def openJointsTable(self):
+    def openJointsTable(self) -> None:
+        """Open the joints table."""
         dialog = TrussItems(self.current_tab, Joint)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def openMembersTable(self):
+    def openMembersTable(self) -> None:
+        """Open the members table."""
         dialog = TrussItems(self.current_tab, Member)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def openSupportsTable(self):
+    def openSupportsTable(self) -> None:
+        """Open the supports table."""
         dialog = TrussItems(self.current_tab, Support)
         dialog.open()
         self.dialogs.add(dialog)

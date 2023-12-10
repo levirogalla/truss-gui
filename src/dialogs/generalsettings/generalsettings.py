@@ -10,7 +10,7 @@ from utils.saveopen import SavedTruss
 
 
 class GeneralSettings(QDialog):
-    """Class for truss view preferences dialog."""
+    """Application general settings."""
 
     def __init__(self, parent) -> None:
         super().__init__(parent)
@@ -25,7 +25,7 @@ class GeneralSettings(QDialog):
     def parentWidget(self) -> TrussWidget | None:
         return super().parentWidget()
 
-    def applySettings(self):
+    def applySettings(self) -> None:
         parent = self.parentWidget()
         parent.general_settings["zoom_sensitivity"] = self.ui.zoomSensitiviySpinBox.value(
         )
@@ -35,10 +35,10 @@ class GeneralSettings(QDialog):
         self.close()
         SavedTruss.save_general_settings(parent.general_settings)
 
-    def cancel(self):
+    def cancel(self) -> None:
         self.close()
 
-    def loadCurrentSettings(self):
+    def loadCurrentSettings(self) -> None:
         saved_settings = SavedTruss.get_general_settings()
 
         # do this incase new setting are added that arent in the users version

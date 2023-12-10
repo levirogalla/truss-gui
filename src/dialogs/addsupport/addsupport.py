@@ -6,7 +6,7 @@ from pytruss import Support, Joint
 
 
 class AddSupportDialog(QDialog):
-    """Class for add support form."""
+    """Class for add support form. Allows for joint selection."""
 
     def __init__(self, joints: set[Joint], selected_joint: Joint) -> None:
         super().__init__(None)
@@ -22,6 +22,7 @@ class AddSupportDialog(QDialog):
 
     @staticmethod
     def get_support(joints: set[Joint], selected_joint: Joint) -> tuple[Joint, str]:
+        """Returns joint, support_type."""
         dialog = AddSupportDialog(joints, selected_joint)
         dialog.exec()
         try:

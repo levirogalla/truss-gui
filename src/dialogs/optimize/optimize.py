@@ -1,10 +1,11 @@
 import copy
+import os
 
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
-from PyQt6.QtCore import QTimer, QThread, pyqtSignal
-from PyQt6.QtWidgets import QDialog, QFileDialog
+from PyQt6.QtCore import QTimer, QThread, pyqtSignal, Qt
+from PyQt6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from pytruss import Mesh
 
@@ -51,10 +52,18 @@ class OptimizeDialog(QDialog):
         self.training_timer = QTimer()
         self.training_timer.timeout.connect(self.updateTrainingData)
         self.training_thread.finished.connect(self.handleFinishedTraining)
+        self.training_thread.no_optimizer_parms_error.connect(self.showError)
 
     # redefine for type hints
     def parentWidget(self) -> TrussWidget | None:
         return super().parentWidget()
+
+    def showError(self) -> None:
+        QMessageBox.critical(
+            self,
+            "Optimization Error",
+            "This is likely because all joints are fixed. Set a joints track grad attribute to True to fix this.",
+        )
 
     def loadSettings(self) -> None:
         """Load current settings."""
@@ -219,8 +228,6 @@ class OptimizeDialog(QDialog):
             print(e)
             self.ui.frameRateSpinBox.clear()
 
-        print(parent.truss_optimization_settings)
-
     def selectPath(self) -> None:
         """Handels select path dialog for save path."""
         dialog = QFileDialog(self)
@@ -231,6 +238,13 @@ class OptimizeDialog(QDialog):
 
     def startTraining(self) -> None:
         """Starts optimizing the truss on a new thread."""
+        path = self.parentWidget().truss_optimization_settings["save_path"]
+        if path is not None or not os.path.exists(str(path)):
+            response = QMessageBox.critical(
+                self, "No Save Path", "No save path was specified, the optimized truss will not be save.", QMessageBox.StandardButton.Ok | QMessageBox.StandardButton.Abort)
+            if response == QMessageBox.StandardButton.Abort:
+                return
+
         self.ui.progressBar.setMaximum(
             self.parentWidget().truss_optimization_settings["epochs"]
         )
@@ -282,21 +296,23 @@ class OptimizeDialog(QDialog):
 
             saved_truss.truss.delete_epochs_counter()
 
-            saved_truss.save(
-                optim_settings["save_path"] + "/" + optional_prefix + str(epoch) + file_name)
+            if optim_settings["save_path"] is not None:
+                saved_truss.save(
+                    optim_settings["save_path"] + "/" + optional_prefix + str(epoch) + file_name)
 
-        except Exception as e:
+        except FileNotFoundError as e:
             print(e)
 
     def handleStop(self) -> None:
         """Stops the training."""
         self.new_truss.stop_training()
-        print(NotImplemented)
+        self.handleFinishedTraining()
 
 
 class TrainThread(QThread):
     """Class for optimizing truss on seperate cpu thread."""
     finished = pyqtSignal()
+    no_optimizer_parms_error = pyqtSignal()
 
     def __init__(self, truss: Mesh, settings: dict) -> None:
         super().__init__()
@@ -308,22 +324,26 @@ class TrainThread(QThread):
             self.optimizer = optim.Adam
 
     def run(self) -> None:
-        settings = self.settings
-        self.truss.optimize_cost(
-            member_cost=settings["member_cost"],
-            joint_cost=settings["joint_cost"],
-            lr=settings["lr"],
-            epochs=settings["epochs"],
-            optimizer=self.optimizer,
-            print_mesh=False,
-            show_at_epoch=False,
-            min_member_length=settings["min_member_length"],
-            max_member_length=settings["max_member_length"],
-            max_tensile_force=settings["max_tensile_force"],
-            max_compresive_force=settings["max_compressive_force"],
-            constriant_agression=settings["constraint_aggression"],
-            progress_bar=True,
-            show_metrics=False,
-            update_metrics_interval=settings["update_metrics_interval"],
-        )
-        self.finished.emit()
+
+        try:
+            settings = self.settings
+            self.truss.optimize_cost(
+                member_cost=settings["member_cost"],
+                joint_cost=settings["joint_cost"],
+                lr=settings["lr"],
+                epochs=settings["epochs"],
+                optimizer=self.optimizer,
+                print_mesh=False,
+                show_at_epoch=False,
+                min_member_length=settings["min_member_length"],
+                max_member_length=settings["max_member_length"],
+                max_tensile_force=settings["max_tensile_force"],
+                max_compresive_force=settings["max_compressive_force"],
+                constriant_agression=settings["constraint_aggression"],
+                progress_bar=True,
+                show_metrics=False,
+                update_metrics_interval=settings["update_metrics_interval"],
+            )
+            self.finished.emit()
+        except ValueError as e:
+            self.no_optimizer_parms_error.emit()

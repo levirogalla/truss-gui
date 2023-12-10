@@ -1,12 +1,10 @@
-from typing import Callable
-
 from PyQt6.QtWidgets import QDialog, QMessageBox
 from .addforce_ui import Ui_addForceForm
 from pytruss import Force, Joint
 
 
 class AddForceDialog(QDialog):
-    """Class for add force form."""
+    """Class for add force form, this form allows for the joint for the force to be selected.."""
 
     def __init__(self, joints: set[Joint], selected_joint: Joint) -> None:
         super().__init__(None)
@@ -22,6 +20,7 @@ class AddForceDialog(QDialog):
 
     @staticmethod
     def get_force(joints: set[Joint], selected_joint: Joint) -> Force | None:
+        """Get force by showing this dialog. Return PyTruss Force object on succes and none if there was an error."""
         dialog = AddForceDialog(joints, selected_joint)
         dialog.exec()
         try:

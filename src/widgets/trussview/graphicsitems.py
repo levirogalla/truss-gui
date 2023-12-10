@@ -12,7 +12,6 @@ from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEven
 
 from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
-from utils.saveopen import SavedTruss, DEFAULT_OPTIMIZATION_SETTINGS, DEFAULT_VIEW_PREFERENCES
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
 from widgets.contextmenus.selectedmenu.selectedmenu import SelectedMenu
 
@@ -43,15 +42,20 @@ class TrussItem(QGraphicsItem):
         self.scene().views()[0].edits.append(event)
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        """Handles mouse press event."""
+
         if event.button() == Qt.MouseButton.LeftButton:
             self.setSelected(not self.isSelected())
+            print("Truss Item Mouse Press Event Function", self.isSelected())
+            self.scene().views()[0].interacted.emit()
         elif event.button() == Qt.MouseButton.RightButton:
+            self.setSelected(True)
             menu = SelectedMenu(self.scene().views()[0])
-            menu.exec(self.scene().views()[
-                      0].mapToGlobal(self.scene().views()[
-                          0].mapFromScene(self.scenePos())))
+            menu.exec(event.screenPos())
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        # print("ballsn", self.isSelected())
+        # "Handle mouse release event"
         return
 
 
@@ -138,6 +142,7 @@ class JointItem(TrussItem):
         self.__dragging_mode = False
 
     def mouseDoubleClickEvent(self, a0: QMouseEvent | None) -> None:
+        """Handle double click event."""
         if a0.button() == Qt.MouseButton.LeftButton:
             self.__dragging_mode = True
             self.offset = a0.pos()
@@ -147,14 +152,16 @@ class JointItem(TrussItem):
             self.scene().views()[0].interacted.emit()
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        """Handle mouse press event."""
         if event.button() == Qt.MouseButton.LeftButton:
             if self.__dragging_mode:
                 self.__dragging = True
                 self.offset = event.pos()
                 self.setCursor(Qt.CursorShape.ClosedHandCursor)
+                self.scene().views()[0].interacted.emit()
             else:
-                self.setSelected(not self.isSelected())
-            self.scene().update()
+                super().mousePressEvent(event)
+                return
             self.scene().views()[0].interacted.emit()
 
         if event.button() == Qt.MouseButton.RightButton:
@@ -162,11 +169,10 @@ class JointItem(TrussItem):
                 super().mousePressEvent(event)
             else:
                 menu = JointMenu(self.scene().views()[0], self)
-                menu.exec(self.scene().views()[
-                    0].mapToGlobal(self.scene().views()[
-                        0].mapFromScene(self.scenePos())))
+                menu.exec(event.screenPos())
 
     def mouseMoveEvent(self, a0: QGraphicsSceneMouseEvent | None) -> None:
+        """Handles mouse move event."""
         if self.__dragging:
             for member in self.joint.members:
                 member_item: MemberItem = self.getConnection(
@@ -190,6 +196,7 @@ class JointItem(TrussItem):
             self.scene().views()[0].interacted.emit()
 
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent | None) -> None:
+        """Handles mouse release event."""
         if self.__dragging:
             self.clearModes()
             self.setCursor(Qt.CursorShape.ArrowCursor)
@@ -245,6 +252,7 @@ class MemberItem(TrussItem):
             painter.drawRect(rect)
 
     def boundingRect(self) -> QRectF:
+        """Returns bounding rect for member."""
         j1: JointItem = self.getConnection(id(self.member.joint_a))
         j2: JointItem = self.getConnection(id(self.member.joint_b))
         p1: QPointF = j1.scenePos()
@@ -279,6 +287,7 @@ class MemberItem(TrussItem):
         return rect
 
     def shape(self) -> QPainterPath:
+        """Return member shape."""
         path = QPainterPath()
         p1: QPointF = self.getConnection(id(self.member.joint_a)).scenePos()
         p2: QPointF = self.getConnection(id(self.member.joint_b)).scenePos()
@@ -334,6 +343,7 @@ class SupportItem(TrussItem):
         return joint_item
 
     def shape(self) -> QPainterPath:
+        """Return shape of support item."""
         path = QPainterPath()
 
         if Support.Base.base_to_code(self.support.base) == "p":
@@ -376,14 +386,13 @@ class SupportItem(TrussItem):
             return path.translated(self.offset)
 
     def boundingRect(self) -> QRectF:
+        """Retrun bounding rect for support."""
         rect = QRectF(-self.r/2, 0, self.r, self.r)
         return rect.translated(self.offset)
 
     def paint(self, painter: QPainter | None, option: QStyleOptionGraphicsItem | None, widget: QWidget | None = ...) -> None:
+        """Paint the support."""
         draw_bound_box = False
-
-        # self.setPos(self.mapToScene(self.support.joint.x_coordinate,
-        #             self.convertCordinate(self.support.joint.y_coordinate)))
 
         if self.isSelected():
             color = QColor(175, 220, 255)
@@ -422,6 +431,7 @@ class ForceItem(TrussItem):
         return offset
 
     def shape(self) -> QPainterPath:
+        """Return shape of force item."""
         path = QPainterPath()
         tail: QPointF = self.getConnection(id(self.force.joint)).scenePos()
 
@@ -469,6 +479,7 @@ class ForceItem(TrussItem):
         return path
 
     def boundingRect(self) -> QRectF:
+        """Return bounding rect of force."""
         j1: JointItem = self.getConnection(id(self.force.joint))
         tail: QPointF = j1.scenePos()
 
@@ -508,6 +519,7 @@ class ForceItem(TrussItem):
         return rect
 
     def paint(self, painter: QPainter | None, option: QStyleOptionGraphicsItem | None, widget: QWidget | None = ...) -> None:
+        """Paint the force."""
         draw_bound_box = False
 
         if self.isSelected():

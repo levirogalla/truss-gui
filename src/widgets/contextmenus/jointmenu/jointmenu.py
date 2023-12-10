@@ -48,36 +48,43 @@ class JointMenu(QMenu):
 
         self.dialogs = set()
 
-    def update_track_grad(self, track_grad):
+    def update_track_grad(self, track_grad) -> None:
+        "Update joints track grad based on menu selection."
         self.joint_item.joint.set_track_grad(track_grad)
         self.joint_item.updateSceneLocation()
 
-    def show_supports(self):
+    def show_supports(self) -> None:
+        """Open the support table for the connected support."""
         dialog = JointConnections(self.parent(), self.joint_item, Support)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def show_forces(self):
+    def show_forces(self) -> None:
+        """Open the forces table for the connected forces."""
         dialog = JointConnections(self.parent(), self.joint_item, Force)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def show_members(self):
+    def show_members(self) -> None:
+        """Open members table for connected members."""
         dialog = JointConnections(self.parent(), self.joint_item, Member)
         dialog.open()
         self.dialogs.add(dialog)
         dialog.finished.connect(lambda: self.deleteDialog(dialog))
 
-    def delete_joint(self):
+    def delete_joint(self) -> None:
+        """Delete a joint via the table."""
         self.parent().deleteJoint(self.joint_item.joint)
 
     def deleteDialog(self, dialog: QDialog) -> None:
+        """Delete the dialog."""
         dialog.deleteLater()
         self.dialogs.remove(dialog)
 
-    def edit_coordinates(self):
+    def edit_coordinates(self) -> None:
+        """Edit the coordinate of a joint."""
         x_coord, y_coord, track_grad = EditCoordinatesDialog.getCoordinates(
             self.parent(), self.joint_item.joint)
         if x_coord is None or y_coord is None:
