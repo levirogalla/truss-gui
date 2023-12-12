@@ -7,3 +7,6 @@ testtrusses
 .pylintrc
 src/utils/recent.txt
 src/uitls/generalsettings.pkl
+build
+dist
+main.spec

@@ -1,5 +1,8 @@
+"""Any OS IO operation for the truss should be done through here."""
+
 import pickle
 import copy
+import os
 from pytruss import Mesh
 
 DEFAULT_OPTIMIZATION_SETTINGS = {
@@ -42,6 +45,8 @@ DEFAULT_GENERAL_SETTINGS = {
     "pan_button": "Middle Mouse"
 }
 
+PWD = os.path.dirname(os.path.dirname(__file__)) + "/appdata"
+
 
 class SavedTruss:
     """Handles creating of truss save object that will be pickled. This object should be made before every save event to ensure all new features and settings are acounted for."""
@@ -60,7 +65,7 @@ class SavedTruss:
         if path not in files:
             files.insert(0, path)
 
-        with open("src/utils/recent.txt", "w+") as f:
+        with open(f"{PWD}/recent.txt", "w+") as f:
             f.writelines("\n".join(files))
 
     def save(self, file: str, optional_suffix="", optional_prefix="") -> None:
@@ -76,13 +81,13 @@ class SavedTruss:
     def recent() -> list[str]:
         """Get the recent files."""
         try:
-            with open("src/utils/recent.txt", "r") as f:
+            with open(f"{PWD}/recent.txt", "r") as f:
                 files = f.read().split("\n")
                 if files[-1] == "":
                     files.pop()
             return files
         except FileNotFoundError:
-            with open("src/utils/recent.txt", "w+"):
+            with open(f"{PWD}/recent.txt", "w+"):
                 return []
 
     @staticmethod
@@ -119,7 +124,7 @@ class SavedTruss:
     def get_general_settings() -> dict:
         """Get user defined general settings."""
         try:
-            with open("src/utils/generalsettings.pkl", "rb") as f:
+            with open(f"{PWD}/generalsettings.pkl", "rb") as f:
                 loaded_settings: dict = pickle.load(f)
                 settings = copy.copy(DEFAULT_GENERAL_SETTINGS)
                 for key, val in loaded_settings.items():
@@ -131,5 +136,5 @@ class SavedTruss:
     @staticmethod
     def save_general_settings(setting: dict) -> None:
         """Save general settings."""
-        with open("src/utils/generalsettings.pkl", "wb") as f:
+        with open(f"{PWD}/generalsettings.pkl", "wb") as f:
             pickle.dump(setting, f)
