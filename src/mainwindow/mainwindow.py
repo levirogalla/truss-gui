@@ -207,7 +207,10 @@ class MainWindow(QMainWindow):
 
     def disconnectFileActions(self) -> None:
         "Disconnect file actions."
-        self.ui.actionNew.disconnect(self.handleCreateNewTab)
+        try:
+            self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
+        except RuntimeError:
+            pass
         self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.disconnect(self.saveAs)
         self.ui.actionSave.triggered.disconnect(self.handleSave)
