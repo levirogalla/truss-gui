@@ -1,6 +1,6 @@
 import typing
 
-from PyQt6.QtWidgets import QDialog,  QTableWidgetItem, QTableWidget, QMessageBox
+from PySide6.QtWidgets import QDialog,  QTableWidgetItem, QTableWidget, QMessageBox
 
 from pytruss import Mesh, Joint, Member, Support, Force
 

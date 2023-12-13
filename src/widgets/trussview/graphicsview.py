@@ -4,10 +4,10 @@ import copy
 from pytruss import Mesh, Member, Force, Joint, Support
 from torch import optim
 
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
-from PyQt6.QtCore import QEvent, QPoint, Qt, pyqtSignal, QRectF, QThread, QLineF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush, QResizeEvent, QCursor
-from PyQt6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture, QPanGesture
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
+from PySide6.QtCore import QEvent, QPoint, Qt, Signal, QRectF, QThread, QLineF
+from PySide6.QtGui import QMouseEvent, QPainter, QPen, QPaintEvent, QColor, QPainterPath, QBrush, QResizeEvent, QCursor
+from PySide6.QtWidgets import QWidget, QGraphicsView, QGraphicsScene, QGestureEvent, QPinchGesture, QPanGesture
 
 from dialogs.addsupport.addsupport import AddSupportDialog
 from dialogs.addforce.addforce import AddForceDialog
@@ -21,12 +21,12 @@ class TrussWidget(QGraphicsView):
     """Class for the truss graphics view."""
 
     # this signal is to any tables that are showing data of the truss items to notify it that the truss has changed.
-    interacted = pyqtSignal()
+    interacted = Signal()
 
-    joint_added = pyqtSignal()
-    member_added = pyqtSignal()
-    support_added = pyqtSignal()
-    force_added = pyqtSignal()
+    joint_added = Signal()
+    member_added = Signal()
+    support_added = Signal()
+    force_added = Signal()
 
     def __init__(self, file: str = None) -> None:
         super().__init__()

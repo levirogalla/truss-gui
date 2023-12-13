@@ -4,8 +4,8 @@ import os
 from matplotlib import pyplot as plt
 from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 
-from PyQt6.QtCore import QTimer, QThread, pyqtSignal, Qt
-from PyQt6.QtWidgets import QDialog, QFileDialog, QMessageBox
+from PySide6.QtCore import QTimer, QThread, Signal, Qt
+from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
 from pytruss import Mesh
 
@@ -311,8 +311,8 @@ class OptimizeDialog(QDialog):
 
 class TrainThread(QThread):
     """Class for optimizing truss on seperate cpu thread."""
-    finished = pyqtSignal()
-    no_optimizer_parms_error = pyqtSignal()
+    finished = Signal()
+    no_optimizer_parms_error = Signal()
 
     def __init__(self, truss: Mesh, settings: dict) -> None:
         super().__init__()

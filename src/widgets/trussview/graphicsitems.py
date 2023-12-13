@@ -1,9 +1,9 @@
 from pytruss import Member, Force, Joint, Support
 
-from PyQt6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
-from PyQt6.QtCore import QPointF, Qt,  QRectF
-from PyQt6.QtGui import QMouseEvent, QPainter, QPen, QColor, QPainterPath, QBrush
-from PyQt6.QtWidgets import QWidget
+from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
+from PySide6.QtCore import QPointF, Qt,  QRectF
+from PySide6.QtGui import QMouseEvent, QPainter, QPen, QColor, QPainterPath, QBrush
+from PySide6.QtWidgets import QWidget
 
 from widgets.contextmenus.jointmenu.jointmenu import JointMenu
 from widgets.contextmenus.selectedmenu.selectedmenu import SelectedMenu

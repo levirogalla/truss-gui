@@ -1,6 +1,6 @@
 from typing import Callable
 
-from PyQt6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog
 
 from .checksave_ui import Ui_Changes
 

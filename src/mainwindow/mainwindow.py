@@ -4,7 +4,7 @@ import sys
 import functools
 import os
 
-from PyQt6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
+from PySide6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
 from pytruss import Force, Member, Joint, Support
 
 from .mainwindow_ui import Ui_MainWindow
@@ -40,7 +40,7 @@ class MainWindow(QMainWindow):
         self.current_tab: TrussWidget | StartPage = self.ui.tabWidget.currentWidget()
         self.connectFileActions()
         self.connectSettingsActions()
-        self.handleTabChange()
+        # self.handleTabChange()
         self.ui.tabWidget.tabCloseRequested.connect(self.handleTabClose)
 
         # info selection stuff
@@ -207,7 +207,7 @@ class MainWindow(QMainWindow):
 
     def disconnectFileActions(self) -> None:
         "Disconnect file actions."
-        self.ui.actionNew.triggered.disconnect(self.handleCreateNewTab)
+        self.ui.actionNew.disconnect(self.handleCreateNewTab)
         self.ui.actionOpen.triggered.disconnect(self.handleOpenTruss)
         self.ui.actionSave_As.triggered.disconnect(self.saveAs)
         self.ui.actionSave.triggered.disconnect(self.handleSave)

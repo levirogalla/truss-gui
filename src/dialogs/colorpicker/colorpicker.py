@@ -12,8 +12,8 @@
 
 import colorsys
 
-from PyQt6.QtCore import (QPoint, Qt, pyqtSignal)
-from PyQt6.QtWidgets import (QDialog)
+from PySide6.QtCore import (QPoint, Qt, Signal)
+from PySide6.QtWidgets import (QDialog)
 
 
 from .colorpicker_ui import Ui_ColorPicker as Ui_Main
@@ -21,7 +21,7 @@ from .colorpicker_ui import Ui_ColorPicker as Ui_Main
 
 class ColorPickerDialog(QDialog):
 
-    colorChanged = pyqtSignal()
+    colorChanged = Signal()
 
     def __init__(self, parent, *args, **kwargs):
 

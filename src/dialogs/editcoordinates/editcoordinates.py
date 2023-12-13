@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog
 from pytruss import Joint
 
 # from .trusswidget2 import JointItem, TrussWidget

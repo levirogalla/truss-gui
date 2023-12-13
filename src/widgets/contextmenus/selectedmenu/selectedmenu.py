@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QMenu
+from PySide6.QtWidgets import QMenu
 
 
 class SelectedMenu(QMenu):

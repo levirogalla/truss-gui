@@ -1,5 +1,5 @@
-from PyQt6.QtGui import QMouseEvent
-from PyQt6.QtWidgets import QDialog
+from PySide6.QtGui import QMouseEvent
+from PySide6.QtWidgets import QDialog
 
 from .trusspreferences_ui import Ui_trussPreferences
 from ..colorpicker.colorpicker import ColorPickerDialog

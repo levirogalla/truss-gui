@@ -1,4 +1,4 @@
-from PyQt6.QtWidgets import QDialog
+from PySide6.QtWidgets import QDialog
 
 from .generalsettings_ui import Ui_generalSettings
 from widgets.trussview.graphicsview import TrussWidget
