@@ -1,5 +1,5 @@
 from PySide6.QtWidgets import QMenu, QDialog
-from pytruss import Support, Force, Member
+from trussty import Support, Force, Member
 
 # from .trusswidget2 import JointItem, TrussWidget
 from dialogs.manageitems.manageitems import JointConnections

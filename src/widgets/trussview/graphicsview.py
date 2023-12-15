@@ -1,7 +1,7 @@
 import copy
 
 
-from pytruss import Mesh, Member, Force, Joint, Support
+from trussty import Mesh, Member, Force, Joint, Support
 from torch import optim
 
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
@@ -340,7 +340,7 @@ class TrussWidget(QGraphicsView):
             self.addJoint(Joint(x_cord, y_cord, t_grad))
 
     def addJoint(self, joint: Joint) -> None:
-        """Adds the joint to the pytruss mesh and the Qt Scene at the location of the preview joint."""
+        """Adds the joint to the trussty mesh and the Qt Scene at the location of the preview joint."""
         new_joint = Joint(joint.x_coordinate,
                           joint.y_coordinate, joint.track_grad)
         try:
@@ -547,4 +547,4 @@ class TrussWidget(QGraphicsView):
         elif isinstance(item, SupportItem):
             self.deleteSupport(item.support)
         else:
-            raise ValueError("pytruss- can not delete non TrussItem objects.")
+            raise ValueError("trussty- can not delete non TrussItem objects.")

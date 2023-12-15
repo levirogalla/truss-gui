@@ -3,7 +3,7 @@
 import pickle
 import copy
 import os
-from pytruss import Mesh
+from trussty import Mesh
 
 DEFAULT_OPTIMIZATION_SETTINGS = {
     # optimization settings

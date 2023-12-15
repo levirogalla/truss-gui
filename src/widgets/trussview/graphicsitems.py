@@ -1,4 +1,4 @@
-from pytruss import Member, Force, Joint, Support
+from trussty import Member, Force, Joint, Support
 
 from PySide6.QtWidgets import QGraphicsItem, QGraphicsSceneMouseEvent, QStyleOptionGraphicsItem, QWidget,  QGraphicsScene, QGraphicsView, QMenu
 from PySide6.QtCore import QPointF, Qt,  QRectF
@@ -107,7 +107,7 @@ class JointItem(TrussItem):
         return path
 
     def itemChange(self, change, value):
-        """Update the pytruss joint location on changes the the qt joint item."""
+        """Update the trussty joint location on changes the the qt joint item."""
         if change == QGraphicsItem.GraphicsItemChange.ItemSceneHasChanged:
             self.updateSceneLocation()
         elif self.scene() is not None:
@@ -115,14 +115,14 @@ class JointItem(TrussItem):
         return super().itemChange(change, value)
 
     def updateSceneLocation(self) -> None:
-        """Updates the qt joint item location with the pytruss joint coordinates."""
+        """Updates the qt joint item location with the trussty joint coordinates."""
         point = QPointF(self.joint.x_coordinate,
                         self.convertCordinate(
                             self.joint.y_coordinate) - self.radius)
         self.setPos(point)
 
     def updateCartesianLocation(self) -> None:
-        """Updates the pytruss joint coordinates with the qt coordinates."""
+        """Updates the trussty joint coordinates with the qt coordinates."""
         self.joint.set_cordinates(
             [self.scenePos().x(),
              self.convertCordinate(self.scenePos().y()) - self.radius]

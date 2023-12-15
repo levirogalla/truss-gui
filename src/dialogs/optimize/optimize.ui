@@ -238,7 +238,7 @@
              <item row="2" column="0">
               <widget class="QLabel" name="minMemberLenghtLabel">
                <property name="text">
-                <string>Min Member Lenght</string>
+                <string>Min Member Length</string>
                </property>
               </widget>
              </item>

@@ -7,7 +7,7 @@ from matplotlib.backends.backend_qt5agg import FigureCanvasQTAgg
 from PySide6.QtCore import QTimer, QThread, Signal, Qt
 from PySide6.QtWidgets import QDialog, QFileDialog, QMessageBox
 
-from pytruss import Mesh
+from trussty import Mesh
 
 from torch import optim
 

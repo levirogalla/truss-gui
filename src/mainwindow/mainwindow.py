@@ -1,11 +1,11 @@
-"""Gui for pytruss."""
+"""Gui for trussty."""
 
 import sys
 import functools
 import os
 
 from PySide6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
-from pytruss import Force, Member, Joint, Support
+from trussty import Force, Member, Joint, Support
 
 from .mainwindow_ui import Ui_MainWindow
 from widgets.trussview.graphicsitems import JointItem, JointItem
@@ -55,6 +55,7 @@ class MainWindow(QMainWindow):
         self.showRecentFiles()
 
     def showRecentFiles(self) -> None:
+        return
         "Shows recent files under file action."
         recent_files = SavedTruss.recent()
 

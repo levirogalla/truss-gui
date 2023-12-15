@@ -2,7 +2,7 @@
 #                                       #
 # Modern Color Picker by Tom F.         #
 # Edited by GiorgosXou for Qt6 Support. #
-# Edited by Levi R. for pytruss integration
+# Edited by Levi R. for trussty integration
 #                                       #
 # Version 1.3                           #
 # made with Qt Creator & PyQt5          #

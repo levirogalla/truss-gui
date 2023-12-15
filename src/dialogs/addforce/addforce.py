@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog
 from .addforce_ui import Ui_addForceForm
-from pytruss import Force, Joint
+from trussty import Force, Joint
 
 
 class AddForceDialog(QDialog):

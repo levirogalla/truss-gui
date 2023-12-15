@@ -2,7 +2,7 @@ import typing
 
 from PySide6.QtWidgets import QDialog,  QTableWidgetItem, QTableWidget, QMessageBox
 
-from pytruss import Mesh, Joint, Member, Support, Force
+from trussty import Mesh, Joint, Member, Support, Force
 
 from .manageitems_ui import Ui_Dialog
 from ..addforcequick.addforcequick import AddForceQuickDialog

@@ -1,6 +1,6 @@
 from PySide6.QtWidgets import QDialog
 from .addsupport_ui import Ui_addSupportForm
-from pytruss import Joint
+from trussty import Joint
 
 
 class AddSupportDialog(QDialog):
