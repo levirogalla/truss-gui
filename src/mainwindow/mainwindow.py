@@ -5,6 +5,7 @@ import functools
 import os
 
 from PySide6.QtWidgets import QFileDialog, QDialog, QApplication, QMainWindow, QTableWidgetItem, QTableWidgetSelectionRange, QAbstractItemView
+from PySide6.QtCore import QTimer
 from trussty import Force, Member, Joint, Support
 
 from .mainwindow_ui import Ui_MainWindow
@@ -17,6 +18,7 @@ from dialogs.trusspreferences.trussprefences import TrussPreferences
 from dialogs.manageitems.manageitems import TrussItems
 from dialogs.generalsettings.generalsettings import GeneralSettings
 from utils.saveopen import SavedTruss
+from utils.validate import validate_user
 
 
 class MainWindow(QMainWindow):
@@ -53,9 +55,34 @@ class MainWindow(QMainWindow):
 
         # for the open recent action
         self.showRecentFiles()
+        self.connectLicenceChecks()
+
+        self.licence_check_timer = QTimer(self)
+        self.licence_check_timer.timeout.connect(lambda: validate_user(self))
+
+        # check for licence every 10 minutes
+        self.licence_check_timer.start(600000)
+
+    def connectLicenceChecks(self) -> None:
+        """Connects buttons presses to licence checks to make sure user"""
+        self.ui.addForceButton.pressed.connect(lambda: validate_user(self))
+        self.ui.addJointButton.pressed.connect(lambda: validate_user(self))
+        self.ui.addMemberButton.pressed.connect(lambda: validate_user(self))
+        self.ui.addSupportButton.pressed.connect(lambda: validate_user(self))
+        self.ui.actionAddForce.triggered.connect(lambda: validate_user(self))
+        self.ui.actionAddJointDialog.triggered.connect(
+            lambda: validate_user(self))
+        self.ui.actionAddJointDrop.triggered.connect(
+            lambda: validate_user(self))
+        self.ui.actionAddMember.triggered.connect(lambda: validate_user(self))
+        self.ui.actionAddSupport.triggered.connect(lambda: validate_user(self))
+        self.ui.actionOpen_Optimizer.triggered.connect(
+            lambda: validate_user(self))
+        self.ui.actionOpen.triggered.connect(lambda: validate_user(self))
+        self.ui.actionOptimize.triggered.connect(lambda: validate_user(self))
+        self.ui.actionDelete.triggered.connect(lambda: validate_user(self))
 
     def showRecentFiles(self) -> None:
-        return
         "Shows recent files under file action."
         recent_files = SavedTruss.recent()
 
