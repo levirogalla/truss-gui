@@ -9,3 +9,4 @@ src/utils/validate.py
 build
 dist
 main.spec
+src/appdata/validation.txt

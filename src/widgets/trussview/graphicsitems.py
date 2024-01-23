@@ -40,7 +40,7 @@ class TrussItem(QGraphicsItem):
         if event.button() == Qt.MouseButton.LeftButton:
             self.setSelected(not self.isSelected())
             print("Truss Item Mouse Press Event Function", self.isSelected())
-            self.scene().views()[0].interacted.emit()
+            # self.scene().views()[0].interacted.emit()
         elif event.button() == Qt.MouseButton.RightButton:
             self.setSelected(True)
             menu = SelectedMenu(self.scene().views()[0])
@@ -155,9 +155,8 @@ class JointItem(TrussItem):
             else:
                 super().mousePressEvent(event)
                 return
-            self.scene().views()[0].interacted.emit()
 
-        if event.button() == Qt.MouseButton.RightButton:
+        elif event.button() == Qt.MouseButton.RightButton:
             if self.isSelected():
                 super().mousePressEvent(event)
             else:

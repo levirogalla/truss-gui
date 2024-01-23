@@ -288,7 +288,6 @@ class TrussWidget(QGraphicsView):
         elif self.itemAt(event.pos()) is not None:
             # the user clicking on a scene item so forward the request to the scene
             super().mousePressEvent(event)
-            pass
         elif event.button() == Qt.MouseButton.MiddleButton and self.general_settings["pan_button"] == "Middle Mouse":
             self.paning = True
             self.setCursor(Qt.CursorShape.ClosedHandCursor)
