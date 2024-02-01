@@ -255,6 +255,8 @@ class MainWindow(QMainWindow):
 
     def handleOptimize(self) -> None:
         """Opens the optimization dialog."""
+        # this makes it work idk why
+        self.handleTabChange()
         # block current truss widget when this form is opened
         form = OptimizeDialog(self.current_tab)
         form.exec()

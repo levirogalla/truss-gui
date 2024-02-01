@@ -7,7 +7,7 @@ from PySide6.QtWidgets import QApplication
 def main():
     app = QApplication(sys.argv)
     window = MainWindow()
-    window.setWindowTitle("Truss Maker")
+    window.setWindowTitle("Trussty")
     window.show()
     sys.exit(app.exec())
 

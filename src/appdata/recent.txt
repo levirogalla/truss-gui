@@ -1,5 +1,5 @@
+/Users/levirogalla/Desktop/test2.trss
+/Users/levirogalla/Documents/temp.trss
 /Users/levirogalla/Dev/Practice/Projects/truss-gui/testtrusses/newtest.trss
 /Users/levirogalla/Dev/Practice/Projects/truss-gui/testtrusses/finaltest.trss
 /Users/levirogalla/Dev/Practice/Projects/truss-gui/testtrusses/testspeed.trss
-/Users/levirogalla/Dev/Practice/Projects/truss-gui/testtrusses/test2.trss
-/Users/levirogalla/Dev/Practice/Projects/truss-gui/testtrusses/test.trss

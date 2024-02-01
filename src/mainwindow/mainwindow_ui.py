@@ -477,7 +477,7 @@ class Ui_MainWindow(object):
         self.addForceButton.setText(QCoreApplication.translate("MainWindow", u"Add Force", None))
         self.addSupportButton.setText(QCoreApplication.translate("MainWindow", u"Add Support", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.start), QCoreApplication.translate("MainWindow", u"Start", None))
-        self.label.setText(QCoreApplication.translate("MainWindow", u"Truss Maker v0.0.0", None))
+        self.label.setText(QCoreApplication.translate("MainWindow", u"Trussty v0.1.0", None))
         self.zoomOutButton.setText(QCoreApplication.translate("MainWindow", u"-", None))
         self.zoomInButton.setText(QCoreApplication.translate("MainWindow", u"+", None))
         ___qtablewidgetitem = self.jointInfo.horizontalHeaderItem(0)

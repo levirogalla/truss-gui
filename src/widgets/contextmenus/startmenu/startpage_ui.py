@@ -107,7 +107,7 @@ class Ui_StartPage(object):
 
     def retranslateUi(self, StartPage):
         StartPage.setWindowTitle(QCoreApplication.translate("StartPage", u"Start Page", None))
-        self.welcomLabel.setText(QCoreApplication.translate("StartPage", u"Welcom to the trussty GUI!", None))
+        self.welcomLabel.setText(QCoreApplication.translate("StartPage", u"Welcome to Trussty!", None))
         self.newLabel.setText(QCoreApplication.translate("StartPage", u"Create a new truss:", None))
         self.newButton.setText(QCoreApplication.translate("StartPage", u"New", None))
         self.openLabel.setText(QCoreApplication.translate("StartPage", u"Open a truss:", None))

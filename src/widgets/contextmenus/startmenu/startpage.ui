@@ -17,7 +17,7 @@
    <item>
     <widget class="QLabel" name="welcomLabel">
      <property name="text">
-      <string>Welcom to the trussty GUI!</string>
+      <string>Welcome to Trussty!</string>
      </property>
     </widget>
    </item>
